@@ -3,5 +3,12 @@
         "x": 1444,
         "y": 944,
         "description": "点击位置"
+    },
+    "crop": {
+        "left": 0,
+        "top": 220,
+        "right": 2940,
+        "bottom": 1800,
+        "description": "默认裁剪边界"
     }
 }
