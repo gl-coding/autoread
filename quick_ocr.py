@@ -32,7 +32,7 @@ def main():
             use_textline_orientation=True,
             lang='ch'
         )
-        
+    
         print("✅ OCR模型加载完成")
         
         # 执行识别
@@ -43,9 +43,9 @@ def main():
             
             for i, line in enumerate(result, 1):
                 if isinstance(line, list) and len(line) >= 2:
-                    text = line[1][0]
-                    confidence = line[1][1]
-                    print(f"{i}. {text} (置信度: {confidence:.2f})")
+                text = line[1][0]
+                confidence = line[1][1]
+                print(f"{i}. {text} (置信度: {confidence:.2f})")
                 else:
                     print(f"{i}. {line}")
         else:
