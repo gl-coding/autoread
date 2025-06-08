@@ -1,3 +1,5 @@
 Pillow==10.2.0
 PyQt5==5.15.10
-pyautogui==0.9.54 
+pyautogui==0.9.54
+paddleocr==2.7.0
+matplotlib==3.8.2 

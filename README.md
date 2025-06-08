@@ -10,14 +10,17 @@
 - 每次点击后自动截图
 - 智能检测鼠标移动，自动停止循环
 - 截图自动保存至screenshots目录
+- OCR结果文件合并功能
 
 ## 安装依赖
 
 ```bash
-pip install PyQt5 pyautogui
+pip install -r requirements.txt
 ```
 
 ## 使用说明
+
+### 1. 鼠标自动点击
 
 1. 运行程序：
    ```bash
@@ -46,9 +49,33 @@ pip install PyQt5 pyautogui
    - 文件名格式：screenshot_年月日_时分秒.png
    - 示例：screenshot_20240101_120000.png
 
+### 2. OCR结果合并
+
+使用 `merge_ocr_results.py` 脚本可以将OCR结果文件按顺序合并：
+
+1. 基本用法：
+   ```bash
+   python merge_ocr_results.py
+   ```
+   - 默认从 `ocr_results` 目录读取所有txt文件
+   - 按文件名字母顺序合并
+   - 输出到 `merged_results/merged_ocr_results.txt`
+
+2. 调试模式：
+   ```bash
+   python merge_ocr_results.py -d
+   ```
+   - 显示处理进度
+   - 在输出文件中添加文件信息
+
+3. 自定义路径：
+   ```bash
+   python merge_ocr_results.py --input-dir 自定义输入目录 --output-file 自定义输出文件路径
+   ```
+
 ## 注意事项
 
-1. 程序运行时会自动创建screenshots目录
+1. 程序运行时会自动创建必要的目录（screenshots、merged_results等）
 2. 在循环过程中移动鼠标将自动停止循环
 3. 循环开始后所有按钮会被禁用，直到循环停止
 4. 坐标输入框只接受数字输入
@@ -63,6 +90,5 @@ pip install PyQt5 pyautogui
 ## 系统要求
 
 - Python 3.6+
-- PyQt5
-- pyautogui
-- 支持的操作系统：Windows/MacOS/Linux # autoread
+- 依赖包：见 requirements.txt
+- 支持的操作系统：Windows/MacOS/Linux
