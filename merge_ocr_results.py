@@ -29,8 +29,8 @@ def merge_ocr_results(input_dir, output_file, debug=False):
                         if debug:
                             outfile.write(f"### 文件 {i}/{len(files)}: {filename} ###\n")
                         outfile.write(content)
-                        if i < len(files):  # 如果不是最后一个文件，添加换行
-                            outfile.write("\n")
+                        if i < len(files):  # 如果不是最后一个文件，添加三个空行
+                            outfile.write("\n\n\n")
                 if debug:
                     print(f"处理文件 ({i}/{len(files)}): {filename}")
             except Exception as e:
@@ -51,7 +51,7 @@ def main():
         merge_ocr_results(args.input_dir, args.output_file, debug=args.debug)
         
         print(f"合并完成！输出文件：{args.output_file}")
-        if args.verbose:
+        if args.debug:
             files_count = len([f for f in os.listdir(args.input_dir) if f.endswith('.txt')])
             print(f"共合并了 {files_count} 个文件")
             
