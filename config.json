@@ -6,9 +6,10 @@
     },
     "crop": {
         "left": 0,
-        "top": 220,
+        "top": 160,
         "right": 2940,
         "bottom": 1800,
         "description": "默认裁剪边界"
-    }
+    },
+    "target_width": 600
 }
