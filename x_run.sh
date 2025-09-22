@@ -1,6 +1,9 @@
 function gen_pdf() {
+    #先清空目录，裁剪目录
     rm -rf cropped
+    #再清空分割目录
     rm -rf split_results
+    #再清空ocr目录
     #rm -rf ocr_results
 
     # 裁剪图片，去掉电脑背景的边框，保留书本的内容
@@ -18,7 +21,7 @@ function gen_pdf() {
 }
 
 function auto_read(){
-    #先开启微信阅读，打开相应的书，然后运行这个脚本
+    #先开启微信阅读，打开相应的书，然后运行这个脚本，截图保存在screenshots目录
     python mouse_tracker.py
 }
 
