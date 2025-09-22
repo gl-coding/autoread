@@ -25,6 +25,10 @@ function auto_read(){
     python mouse_tracker.py
 }
 
+function ocr(){
+    python process_ocr_text.py
+}
+
 arg=$1
 case $arg in
     "gen_pdf")
