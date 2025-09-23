@@ -6,7 +6,7 @@
     },
     "crop": {
         "left": 0,
-        "top": 160,
+        "top": 210,
         "right": 2940,
         "bottom": 1800,
         "description": "默认裁剪边界"
