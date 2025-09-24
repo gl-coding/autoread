@@ -1,5 +1,5 @@
 import requests
-import json, os
+import json, os, time
 import argparse
 
 # 定义 API 端点
@@ -35,6 +35,7 @@ class Prompt:
 prompt = Prompt()
 
 def request_ollama(prompt: str, model_name: str = "llama3.1", stream: bool = True, url: str = "http://localhost:11434/api/generate") -> str:
+    start_time = time.time()
     data = {
         "model": model_name,
         "prompt": prompt,
@@ -46,6 +47,8 @@ def request_ollama(prompt: str, model_name: str = "llama3.1", stream: bool = Tru
         if line:
             result = json.loads(line)
             res_text += result.get("response", "")
+    end_time = time.time()
+    print(f"耗时: {end_time - start_time}秒")
     return res_text
 
 def main():
