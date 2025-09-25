@@ -1,6 +1,6 @@
 from openai import OpenAI
 from dotenv import load_dotenv
-import os,sys
+import os,sys,time
 load_dotenv()
 
 client = OpenAI(
@@ -23,9 +23,6 @@ def correct_article(topic):
                         2. 输入文本： {text}\
                         3. 输出格式要求：\
                             你必须严格按照以下格式输出，不要添加任何其他内容：\
-                            【原文】===========\
-                                {text}\
-                            【修改后】===========\
                                 <在这里给出修改后的文本>\
                         4. 注意：\
                             - 必须严格按照上述格式输出\
@@ -62,8 +59,16 @@ def write_article(topic):
     res = completion.choices[0].message.content
     return res
 
-def main():
+def write_file():
     text = sys.argv[1]
+    filename = os.path.basename(text)
+    res = single_process(text)
+    with open(correct_dir + '/' + filename, 'w', encoding='utf-8') as f:
+        f.write(res)
+    print(f"处理完成: {filename}")
+
+def single_process(text):
+    st = time.time()
     if os.path.exists(text):
         with open(text, 'r', encoding='utf-8') as f:
             text = f.read()
@@ -72,6 +77,8 @@ def main():
     
     res = correct_article(text)
     print(res)
+    print(f"耗时: {time.time() - st}秒")
+    return res
 
 if __name__ == "__main__":
-    main()
+    write_file()
