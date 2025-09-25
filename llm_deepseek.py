@@ -1,6 +1,6 @@
 from openai import OpenAI
 from dotenv import load_dotenv
-import os,sys,time
+import os,sys,time,multiprocessing
 load_dotenv()
 
 client = OpenAI(
@@ -20,10 +20,10 @@ def correct_article(topic):
                             - 修正错误单词，确保每个单词都是正确的\
                             - 添加或修正标点符号，单词和词性都正确\
                             - 针对单词的音标修正音标，确保音标正确\
+                            - 去掉一些内容，如：”随时阅读“、”review“、”加入书架“等\
                         2. 输入文本： {text}\
                         3. 输出格式要求：\
-                            你必须严格按照以下格式输出，不要添加任何其他内容：\
-                                <在这里给出修改后的文本>\
+                            - 输出原文和修改后的文本，用“==============================”分割\
                         4. 注意：\
                             - 必须严格按照上述格式输出\
                             - 原文部分必须完全复制输入文本\
@@ -59,11 +59,14 @@ def write_article(topic):
     res = completion.choices[0].message.content
     return res
 
-def write_file():
-    text = sys.argv[1]
-    filename = os.path.basename(text)
-    res = single_process(text)
-    with open(correct_dir + '/' + filename, 'w', encoding='utf-8') as f:
+def write_file(filename):
+    text_path = os.path.join('ocr_results', filename)
+    if not text_path.endswith('.txt'):
+        return
+    
+    res = single_process(text_path)
+    correct_dir = 'correct_results'
+    with open(os.path.join(correct_dir, filename), 'w', encoding='utf-8') as f:
         f.write(res)
     print(f"处理完成: {filename}")
 
@@ -80,5 +83,25 @@ def single_process(text):
     print(f"耗时: {time.time() - st}秒")
     return res
 
+def multi_process():
+    #python 多进程处理ocr_results目录下的所有txt文件,并行处理
+    cpu_count = os.cpu_count()
+    cpu_count = 1
+    print(f"cpu_count: {cpu_count}")
+    
+    # 创建输出目录
+    correct_dir = 'correct_results'
+    if os.path.exists(correct_dir):
+        import shutil
+        shutil.rmtree(correct_dir)  # 删除目录及其内容
+    os.makedirs(correct_dir, exist_ok=True)
+    
+    # 只处理.txt文件
+    txt_files = [f for f in os.listdir('ocr_results') if f.endswith('.txt')]
+    print(f"找到 {len(txt_files)} 个txt文件")
+    
+    with multiprocessing.Pool(processes=cpu_count) as pool:
+        pool.map(write_file, txt_files)
+
 if __name__ == "__main__":
-    write_file()
+    multi_process()
