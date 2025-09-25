@@ -1,12 +1,48 @@
 from openai import OpenAI
 from dotenv import load_dotenv
-import os
+import os,sys
 load_dotenv()
 
 client = OpenAI(
     base_url="https://api.deepseek.com/",
     api_key=os.getenv("DEEPSEEK_API_KEY")
 )
+
+def correct_article(topic):
+    completion = client.chat.completions.create(
+        model=os.getenv("DEEPSEEK_MODEL"),
+        messages=[
+            {
+                    "role": "system",
+                    "content": "你是一个英文专业词汇书文本校对助手。输入文本是一个英文专业词汇书的识别结果，请严格按照以下要求处理文本：\
+                        1. 任务要求：\
+                            - 逐行修改原文内容\
+                            - 修正错误单词，确保每个单词都是正确的\
+                            - 添加或修正标点符号，单词和词性都正确\
+                            - 针对单词的音标修正音标，确保音标正确\
+                        2. 输入文本： {text}\
+                        3. 输出格式要求：\
+                            你必须严格按照以下格式输出，不要添加任何其他内容：\
+                            【原文】===========\
+                                {text}\
+                            【修改后】===========\
+                                <在这里给出修改后的文本>\
+                        4. 注意：\
+                            - 必须严格按照上述格式输出\
+                            - 原文部分必须完全复制输入文本\
+                            - 不要添加任何额外的解释或说明\
+                ".format(text=topic)
+            },
+            {
+                    "role": "user",
+                    "content": "请帮我校对“" + topic + "”这篇文章的识别结果"
+            }
+        ]
+    )
+
+    res = completion.choices[0].message.content
+    return res
+
 
 def write_article(topic):
     completion = client.chat.completions.create(
@@ -26,7 +62,16 @@ def write_article(topic):
     res = completion.choices[0].message.content
     return res
 
-if __name__ == "__main__":
-    topic = "中国农业情况"
-    res = write_article(topic)
+def main():
+    text = sys.argv[1]
+    if os.path.exists(text):
+        with open(text, 'r', encoding='utf-8') as f:
+            text = f.read()
+    else:
+        text = text
+    
+    res = correct_article(text)
     print(res)
+
+if __name__ == "__main__":
+    main()
