@@ -9,7 +9,7 @@ def test():
     print(text)
     exit()
 
-test()
+#test()
 
 def main():
     #遍历split_results目录下的所有图片，进行OCR识别，并保存到ocr_results目录
@@ -20,7 +20,7 @@ def main():
     for file in os.listdir('split_results'):
         print(file)
         if file.endswith('.png'):
-            text = pytesseract.image_to_string(Image.open('split_results/' + file), lang='eng')
+            text = pytesseract.image_to_string(Image.open('split_results/' + file), lang='chi_sim')
             print(text)
             with open('ocr_results/' + file.replace('.png', '.txt'), 'w') as f:
                 f.write(text)
