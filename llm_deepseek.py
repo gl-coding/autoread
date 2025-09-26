@@ -88,7 +88,7 @@ def single_process(text):
 def multi_process():
     #python 多进程处理ocr_results目录下的所有txt文件,并行处理
     cpu_count = os.cpu_count()
-    cpu_count = 10
+    cpu_count = 20
     print(f"cpu_count: {cpu_count}")
     
     # 创建输出目录
