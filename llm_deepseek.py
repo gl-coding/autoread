@@ -105,5 +105,77 @@ def multi_process():
     with multiprocessing.Pool(processes=cpu_count) as pool:
         pool.map(write_file, txt_files)
 
+def merge_files():
+    correct_dir = 'correct_results'
+    files = [f for f in os.listdir(correct_dir) if f.endswith('.txt')]
+    files.sort()
+    if not os.path.exists('merged_results'):
+        os.makedirs('merged_results')
+    with open('merged_results/merged_ocr_results.txt', 'w', encoding='utf-8') as fw:
+        for file in files:
+            print(file)
+            with open(os.path.join(correct_dir, file), 'r', encoding='utf-8') as f:
+                line = f.read()
+                line = line.split('==============================')[1]
+                content = ""
+                for l in line.split('\n'):
+                    if l.strip():
+                        content += l.strip() + '\n'
+                line = content
+                print(line)
+                fw.write(line)
+    print(f"合并完成！输出文件：{correct_dir}/merged_ocr_results.txt")
+
+def process_text():
+    def is_all_chinese(l):
+        for char in l:
+            if not '\u4e00' <= char <= '\u9fff':
+                return False
+        return True
+
+    def not_chinese(l):
+        for char in l:
+            if '\u4e00' <= char <= '\u9fff':
+                return False
+        return True
+    
+    res = []
+    with open('merged_results/merged_ocr_results.txt', 'r', encoding='utf-8') as f:
+        text = f.read()
+        print_flag = False
+        for l in text.split('\n'):
+            if l.startswith("Sentence"):
+                print_flag = False
+            if l.startswith("核心词表"):
+                print_flag = True
+                continue
+            if print_flag:
+                if l.strip("=") == "":
+                    continue
+                if l.startswith("主题归纳") or l.startswith("修改后的内容"):
+                    continue
+                if len(res) > 0 and l == res[-1]:
+                    continue
+                if l.startswith("n.") or l.startswith("v.") or l.startswith("adj.") or l.startswith("adv.") or l.startswith("pron.") \
+                    or l.startswith("vi.") or l.startswith("vt.") or l.startswith("abbr.") or l.startswith("abbrv.") or l.startswith("prep.") \
+                    or l.startswith("【搭配】") or l.startswith("【同根】") or l.startswith("【同义】") \
+                    or l.startswith("【参考】") or l.startswith("【反义】"):
+                    res[-1] = res[-1] + " " + l
+                    continue
+                if l.
+                if "【记忆】" not in l:
+                    res.append(l)
+                #print(res[-1])
+    
+    idx = 0
+    with open('merged_results/merged_ocr_results_core_words.txt', 'w', encoding='utf-8') as fw:
+        for r in res:
+            idx += 1
+            print(f"{idx}: {r}")
+            fw.write(r)
+            fw.write('\n')
+
 if __name__ == "__main__":
-    multi_process()
+    #multi_process()
+    #merge_files()
+    process_text()
