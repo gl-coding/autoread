@@ -129,7 +129,9 @@ def merge_files():
 def process_text():
     def is_all_chinese(l):
         for char in l:
-            if not '\u4e00' <= char <= '\u9fff':
+            if not (('\u4e00' <= char <= '\u9fff') or 
+                    ('\u3400' <= char <= '\u4dbf') or
+                    char in '，、。！？；：「」『』（）【】《》'):
                 return False
         return True
 
@@ -162,14 +164,25 @@ def process_text():
                     or l.startswith("【参考】") or l.startswith("【反义】"):
                     res[-1] = res[-1] + " " + l
                     continue
-                if l.
                 if "【记忆】" not in l:
                     res.append(l)
                 #print(res[-1])
     
+    res_new = []
+    line_tp = ""
+    for r in res:
+        if not_chinese(r):
+            line_tp = "en"
+            r += " eng_flag"
+        elif line_tp == "en" and is_all_chinese(r):
+            res_new[-1] = res_new[-1] + " " + r + " --" 
+            line_tp = ""
+            continue
+        res_new.append(r)
+
     idx = 0
     with open('merged_results/merged_ocr_results_core_words.txt', 'w', encoding='utf-8') as fw:
-        for r in res:
+        for r in res_new:
             idx += 1
             print(f"{idx}: {r}")
             fw.write(r)
