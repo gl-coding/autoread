@@ -23,11 +23,13 @@ def correct_article(topic):
                             - 去掉一些内容，如：”随时阅读“、”review“、”加入书架“等\
                         2. 输入文本： {text}\
                         3. 输出格式要求：\
-                            - 输出原文和修改后的文本，用“==============================”分割\
+                            - 原文内容\
+                            - ==============================\
+                            - 修改后的内容\
                         4. 注意：\
                             - 必须严格按照上述格式输出\
                             - 原文部分必须完全复制输入文本\
-                            - 不要添加任何额外的解释或说明\
+                            - 不要添加任何额外的解释或说明，包括额外的[原文内容]、[修改后的内容]\
                 ".format(text=topic)
             },
             {
@@ -86,7 +88,7 @@ def single_process(text):
 def multi_process():
     #python 多进程处理ocr_results目录下的所有txt文件,并行处理
     cpu_count = os.cpu_count()
-    cpu_count = 1
+    cpu_count = 10
     print(f"cpu_count: {cpu_count}")
     
     # 创建输出目录
