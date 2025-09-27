@@ -131,7 +131,7 @@ def process_text():
         for char in l:
             if not (('\u4e00' <= char <= '\u9fff') or 
                     ('\u3400' <= char <= '\u4dbf') or
-                    char in '，、。！？；：「」『』（）【】《》'):
+                    char in '，、。！？；：「」『』（）【】《》.；“”：; (){}[]'):
                 return False
         return True
 
@@ -154,7 +154,7 @@ def process_text():
             if print_flag:
                 if l.strip("=") == "":
                     continue
-                if l.startswith("主题归纳") or l.startswith("修改后的内容"):
+                if l.startswith("主题归纳") or l.startswith("修改后的内容") or l.startswith("Review"):
                     continue
                 if len(res) > 0 and l == res[-1]:
                     continue
@@ -175,8 +175,10 @@ def process_text():
             line_tp = "en"
             r += " eng_flag"
         elif line_tp == "en" and is_all_chinese(r):
-            res_new[-1] = res_new[-1] + " " + r + " --" 
+            res_new[-1] = res_new[-1] + " " + r
             line_tp = ""
+            continue
+        if len(res_new) > 0 and r in res_new[-1]:
             continue
         res_new.append(r)
 
