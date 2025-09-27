@@ -4,8 +4,20 @@ import argparse
 
 # 定义 API 端点
 url = "http://localhost:11434/api/generate"
+MODEL_NAME = "llama3.1"
+MODEL_NAME = "qwen3:8b"
 
 class Prompt:
+    @staticmethod
+    def translate(text: str) -> str:
+        # 构建提示词
+        prompt = "你是一个英文翻译助手。输入文本是一个英文词汇、短语或句子，请帮我标注中文意思，如果有多个意思，请用“，”分割。\
+                1. 输入文本： {text}\
+                2. 输出格式要求：\
+                    - 只输出翻译后的文本，不要添加任何额外的解释或说明/no_think\
+                ".format(text=text)
+        return prompt
+
     @staticmethod
     def correct_text(text: str) -> str:
         # 构建提示词
@@ -32,9 +44,7 @@ class Prompt:
                 ".format(text=text)
         return prompt
 
-prompt = Prompt()
-
-def request_ollama(prompt: str, model_name: str = "llama3.1", stream: bool = True, url: str = "http://localhost:11434/api/generate") -> str:
+def request_ollama(prompt: str, model_name: str = MODEL_NAME, stream: bool = True, url: str = url) -> str:
     start_time = time.time()
     data = {
         "model": model_name,
@@ -49,12 +59,23 @@ def request_ollama(prompt: str, model_name: str = "llama3.1", stream: bool = Tru
             res_text += result.get("response", "")
     end_time = time.time()
     print(f"耗时: {end_time - start_time}秒")
+    if model_name == "qwen3:8b":
+        #去掉思考模式的标签
+        res_text = res_text.replace("<think>", "")
+        res_text = res_text.replace("</think>", "")
+        res_text = res_text.strip()
     return res_text
+
+def func_call(text: str, model: str = MODEL_NAME, prompt_func: str = "") -> str:
+    prompt_obj = Prompt()
+    prompt_text = getattr(prompt_obj, prompt_func)(text)
+    response = request_ollama(prompt_text, model, True, url)
+    return response
 
 def main():
     parser = argparse.ArgumentParser(description="文本纠错和标点优化工具")
     parser.add_argument("--text", type=str, help="需要处理的文本")
-    parser.add_argument("--model", default="llama3.1", help="使用的模型名称")
+    parser.add_argument("--model", default=MODEL_NAME, help="使用的模型名称")
     parser.add_argument("--prompt", default="", help="使用的提示词")
     
     args = parser.parse_args()
@@ -67,10 +88,7 @@ def main():
     
     # 处理文本
     if args.prompt:
-        prompt_func = args.prompt
-        #根据prompt_func执行相应的函数
-        prompt_text = getattr(prompt, prompt_func)(text)
-        response = request_ollama(prompt_text, args.model, True, url)
+        response = func_call(text, args.model, args.prompt)
         print(response)
 
 if __name__ == "__main__":
