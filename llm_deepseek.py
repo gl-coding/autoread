@@ -1,6 +1,7 @@
 from openai import OpenAI
 from dotenv import load_dotenv
 import os,sys,time,multiprocessing
+from llm_ollama import *
 load_dotenv()
 
 client = OpenAI(
@@ -54,6 +55,28 @@ def write_article(topic):
             {
                     "role": "user",
                     "content": "请帮我生成“" + topic + "”这篇文章的大纲"
+            }
+        ]
+    )
+
+    res = completion.choices[0].message.content
+    return res
+
+def trans_words(topic):
+    completion = client.chat.completions.create(
+        model=os.getenv("DEEPSEEK_MODEL"),
+        messages=[
+            {
+                    "role": "system",
+                    "content": "你是一位英文翻译助手，擅长将英文单词、短语或句子翻译成中文，如果有多个意思，请用“，”分割。\
+                    1. 输入文本： {text}\
+                    2. 输出格式要求：\
+                        - 只输出翻译后的文本，不要添加任何额外的解释或说明/no_think\
+                    ".format(text=topic)
+            },
+            {
+                    "role": "user",
+                    "content": "请帮我翻译“" + topic + "”"
             }
         ]
     )
@@ -175,6 +198,7 @@ def process_text():
             line_tp = "en"
             r += " eng_flag"
         elif line_tp == "en" and is_all_chinese(r):
+            res_new[-1] = res_new[-1].replace("eng_flag", "")
             res_new[-1] = res_new[-1] + " " + r
             line_tp = ""
             continue
@@ -186,6 +210,11 @@ def process_text():
     with open('merged_results/merged_ocr_results_core_words.txt', 'w', encoding='utf-8') as fw:
         for r in res_new:
             idx += 1
+            if r.endswith("eng_flag"):
+                r = r.replace("eng_flag", "")
+                #ch_r = func_call(r, MODEL_NAME, "translate")
+                ch_r = trans_words(r)
+                r = r + " " + ch_r
             print(f"{idx}: {r}")
             fw.write(r)
             fw.write('\n')
@@ -194,3 +223,4 @@ if __name__ == "__main__":
     #multi_process()
     #merge_files()
     process_text()
+    #print(trans_words("poikilotherm /ˈpɔɪkɪloʊθɜːrm/ "))
