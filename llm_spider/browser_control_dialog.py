@@ -17,7 +17,7 @@ import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QTextEdit, QPushButton, QLabel, 
                             QFrame, QSplitter, QListWidget, QListWidgetItem,
-                            QInputDialog, QMessageBox, QDialog)
+                            QInputDialog, QMessageBox, QDialog, QFileDialog)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont, QTextCursor, QPalette, QColor, QPainter, QPainterPath
 
@@ -126,6 +126,41 @@ def save_markdown_content(content, filename=None):
     except Exception as e:
         print(f"保存markdown文件时出错: {str(e)}")
         return None
+
+def load_tasks_from_txt_file(file_path):
+    """从TXT文件加载任务列表"""
+    try:
+        if not os.path.exists(file_path):
+            print(f"文件不存在: {file_path}")
+            return []
+            
+        with open(file_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        
+        # 清理空行和空白字符
+        tasks = []
+        for line in lines:
+            task = line.strip()
+            if task:  # 跳过空行
+                tasks.append(task)
+        
+        print(f"成功从文件加载 {len(tasks)} 个任务: {file_path}")
+        return tasks
+        
+    except UnicodeDecodeError:
+        # 尝试其他编码
+        try:
+            with open(file_path, 'r', encoding='gbk') as f:
+                lines = f.readlines()
+            tasks = [line.strip() for line in lines if line.strip()]
+            print(f"使用GBK编码成功加载 {len(tasks)} 个任务: {file_path}")
+            return tasks
+        except Exception as e:
+            print(f"加载文件时编码错误: {str(e)}")
+            return []
+    except Exception as e:
+        print(f"加载任务文件时出错: {str(e)}")
+        return []
 
 def setup_driver():
     """设置并返回Chrome浏览器驱动"""
@@ -613,10 +648,11 @@ class ChatWindow(QMainWindow):
         self.add_question_btn = QPushButton('+')
         self.remove_question_btn = QPushButton('-')
         self.edit_question_btn = QPushButton('✎')
+        self.load_file_btn = QPushButton('📁')
         self.auto_mode_btn = QPushButton('▶')
         
         for btn in [self.add_question_btn, self.remove_question_btn, 
-                   self.edit_question_btn, self.auto_mode_btn]:
+                   self.edit_question_btn, self.load_file_btn, self.auto_mode_btn]:
             btn.setStyleSheet(button_style)
             btn.setMinimumWidth(40)
             btn.setFont(QFont('Arial', 14))
@@ -624,6 +660,7 @@ class ChatWindow(QMainWindow):
                 self.add_question_btn: '添加问题',
                 self.remove_question_btn: '删除问题',
                 self.edit_question_btn: '编辑问题',
+                self.load_file_btn: '从文件加载任务',
                 self.auto_mode_btn: '自动模式'
             }[btn])
         
@@ -632,6 +669,7 @@ class ChatWindow(QMainWindow):
         buttons_layout.addWidget(self.add_question_btn)
         buttons_layout.addWidget(self.remove_question_btn)
         buttons_layout.addWidget(self.edit_question_btn)
+        buttons_layout.addWidget(self.load_file_btn)
         buttons_layout.addWidget(self.auto_mode_btn)
         
         left_layout.addLayout(buttons_layout)
@@ -759,6 +797,7 @@ class ChatWindow(QMainWindow):
         self.add_question_btn.clicked.connect(self.add_question)
         self.remove_question_btn.clicked.connect(self.remove_question)
         self.edit_question_btn.clicked.connect(self.edit_question)
+        self.load_file_btn.clicked.connect(self.load_tasks_from_file)
         self.auto_mode_btn.clicked.connect(self.toggle_auto_mode)
         self.floating_btn.clicked.connect(self.toggle_floating)
         self.questions_list.itemClicked.connect(self.question_selected)
@@ -870,6 +909,64 @@ class ChatWindow(QMainWindow):
         """问题被选中时"""
         self.input_text.setText(item.text())
     
+    def load_tasks_from_file(self):
+        """从文件加载任务列表"""
+        try:
+            # 打开文件选择对话框
+            file_path, _ = QFileDialog.getOpenFileName(
+                self,
+                '选择任务文件',
+                '',  # 起始目录
+                'Text Files (*.txt);;All Files (*)'
+            )
+            
+            if not file_path:
+                return
+            
+            # 加载任务
+            tasks = load_tasks_from_txt_file(file_path)
+            
+            if not tasks:
+                QMessageBox.warning(self, '警告', '文件为空或加载失败！')
+                return
+            
+            # 询问是否替换现有任务
+            if self.questions:
+                reply = QMessageBox.question(
+                    self, 
+                    '确认操作', 
+                    f'当前有 {len(self.questions)} 个任务，加载文件将添加 {len(tasks)} 个新任务。\n\n是否替换现有任务？\n\n是：替换现有任务\n否：添加到现有任务\n取消：不执行操作',
+                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                    QMessageBox.No
+                )
+                
+                if reply == QMessageBox.Cancel:
+                    return
+                elif reply == QMessageBox.Yes:
+                    # 清空现有任务
+                    self.questions.clear()
+                    self.questions_list.clear()
+            
+            # 添加新任务到列表
+            for task in tasks:
+                self.questions.append(task)
+                self.questions_list.addItem(task)
+            
+            # 显示成功消息
+            QMessageBox.information(
+                self, 
+                '加载成功', 
+                f'成功从文件加载 {len(tasks)} 个任务！\n\n可以点击自动模式按钮开始批量处理。'
+            )
+            
+            # 重置状态为就绪，以便自动模式可以正常工作
+            self.status_bar.showMessage('就绪')
+            
+        except Exception as e:
+            error_msg = f'加载任务文件时出错: {str(e)}'
+            print(error_msg)
+            QMessageBox.critical(self, '错误', error_msg)
+    
     def toggle_auto_mode(self):
         """切换自动模式"""
         self.auto_mode = self.auto_mode_btn.isChecked()
@@ -890,6 +987,7 @@ class ChatWindow(QMainWindow):
         """发送下一个问题"""
         try:
             if not self.auto_mode or not self.questions:
+                print(f"自动模式检查: auto_mode={self.auto_mode}, questions数量={len(self.questions) if self.questions else 0}")
                 return
                 
             # 检查是否有正在进行的对话线程
@@ -897,9 +995,10 @@ class ChatWindow(QMainWindow):
                 print("机器人:上一个对话还在进行中，等待完成...")
                 return
                 
-            # 检查当前状态是否为"就绪"
-            if self.status_bar.currentMessage() != "就绪":
-                print("等待就绪状态...")
+            # 检查当前状态是否为"就绪"或包含任务相关信息
+            current_status = self.status_bar.currentMessage()
+            if current_status != "就绪" and not ("任务" in current_status or "加载" in current_status):
+                print(f"等待就绪状态...当前状态: {current_status}")
                 return
                 
             if self.current_question_index < len(self.questions):
