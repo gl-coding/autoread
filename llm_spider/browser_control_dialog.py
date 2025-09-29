@@ -17,7 +17,7 @@ import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QTextEdit, QPushButton, QLabel, 
                             QFrame, QSplitter, QListWidget, QListWidgetItem,
-                            QInputDialog, QMessageBox, QDialog, QFileDialog)
+                            QInputDialog, QMessageBox, QDialog, QFileDialog, QCheckBox, QGridLayout)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont, QTextCursor, QPalette, QColor, QPainter, QPainterPath
 
@@ -287,7 +287,7 @@ def wait_for_ai_response(driver, wait, filename):
             
     raise TimeoutException("等待AI回答超时，已达到最大重试次数")
 
-def send_message(driver, wait, message):
+def send_message(driver, wait, message, custom_filename=None):
     """发送消息并等待AI回答"""
     max_retries = 10
     retry_count = 0
@@ -303,9 +303,14 @@ def send_message(driver, wait, message):
             chat_input.send_keys(message)
             print(f"已输入消息: {message}")
 
-            filename = get_variable_name(message)
-            print(f"生成的变量名: {filename}")
-            filename = f"{filename}.md"
+            # 使用自定义文件名或AI生成的文件名
+            if custom_filename:
+                filename = custom_filename
+                print(f"使用自定义文件名: {filename}")
+            else:
+                filename = get_variable_name(message)
+                print(f"生成的变量名: {filename}")
+                filename = f"{filename}.md"
             
             # 等待一下确保输入完成
             time.sleep(1)
@@ -413,7 +418,7 @@ def visit_deepseek():
                 send_message(driver, wait, test_message)
 
                 print("点击新对话...")
-                new_dialog_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.c7dddcde")))
+                new_dialog_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.ds-icon._1c42ad7")))
                 wait.until(EC.visibility_of(new_dialog_button))
                 driver.execute_script("arguments[0].click();", new_dialog_button)           
                 time.sleep(3)
@@ -450,22 +455,42 @@ class ChatThread(QThread):
     status_changed = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
     
-    def __init__(self, driver, wait, message=None, action=None):
+    def __init__(self, driver, wait, message=None, action=None, custom_filename=None):
         super().__init__()
         self.driver = driver
         self.wait = wait
         self.message = message
         self.action = action
+        self.custom_filename = custom_filename
     
     def run(self):
         try:
             if self.action == "send":
-                send_message(self.driver, self.wait, self.message)
+                send_message(self.driver, self.wait, self.message, self.custom_filename)
                 self.status_changed.emit("就绪")
             elif self.action == "new_chat":
-                new_dialog_button = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.c7dddcde")))
-                self.wait.until(EC.visibility_of(new_dialog_button))
-                self.driver.execute_script("arguments[0].click();", new_dialog_button)
+                # 尝试多个可能的新对话按钮选择器
+                new_chat_selectors = [
+                    "div.ds-icon._1c42ad7"
+                ]
+                
+                button_found = False
+                for selector in new_chat_selectors:
+                    try:
+                        print(f"尝试新对话按钮选择器: {selector}")
+                        new_dialog_button = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, selector)))
+                        self.wait.until(EC.visibility_of(new_dialog_button))
+                        self.driver.execute_script("arguments[0].click();", new_dialog_button)
+                        print(f"成功点击新对话按钮，使用选择器: {selector}")
+                        button_found = True
+                        break
+                    except Exception as e:
+                        print(f"选择器 {selector} 失败: {str(e)}")
+                        continue
+                
+                if not button_found:
+                    raise Exception("未找到新对话按钮，所有选择器都失败")
+                
                 time.sleep(3)
                 self.status_changed.emit("就绪")
         except Exception as e:
@@ -554,6 +579,7 @@ class ChatWindow(QMainWindow):
         self.current_question_index = 0
         self.auto_mode = False
         self.auto_timer = None
+        self.task_counter = 1  # 用于序号命名的计数器
         self.is_floating = False
         self.check_button_timer = QTimer()  # 添加定时器用于检查按钮
         self.check_button_timer.timeout.connect(self.check_and_click_button)
@@ -573,7 +599,7 @@ class ChatWindow(QMainWindow):
     def init_ui(self):
         """初始化用户界面"""
         self.setWindowTitle('DeepSeek 笔记助手')
-        self.setGeometry(0, 0, 700, 450)
+        self.setGeometry(0, 0, 750, 450)  # 适度增加窗口宽度
         
         # 创建中央部件
         central_widget = QWidget()
@@ -618,7 +644,7 @@ class ChatWindow(QMainWindow):
         
         # 问题列表按钮
         buttons_layout = QHBoxLayout()
-        buttons_layout.setSpacing(5)
+        buttons_layout.setSpacing(8)  # 增加间距
         
         # 设置按钮样式
         button_style = """
@@ -674,9 +700,35 @@ class ChatWindow(QMainWindow):
         
         left_layout.addLayout(buttons_layout)
         
+        # 添加一些间距
+        left_layout.addSpacing(10)
+        
+        # 文件命名选项
+        self.use_sequence_naming = QCheckBox("序号命名 (1.md, 2.md...)")
+        self.use_sequence_naming.setFont(QFont('Arial', 10))
+        self.use_sequence_naming.setStyleSheet("""
+            QCheckBox {
+                color: #2c3e50;
+                padding: 5px;
+            }
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+                border-radius: 3px;
+                border: 1px solid rgba(52, 152, 219, 150);
+                background-color: rgba(255, 255, 255, 200);
+            }
+            QCheckBox::indicator:checked {
+                background-color: rgba(52, 152, 219, 200);
+                border: 1px solid rgba(52, 152, 219, 255);
+            }
+        """)
+        self.use_sequence_naming.setToolTip("勾选后，自动模式将使用序号命名文件\n(1.md, 2.md, 3.md...)\n\n不勾选则使用AI生成的语义化文件名\n(cat_lifespan.md, maupin_works.md...)")
+        left_layout.addWidget(self.use_sequence_naming)
+        
         # 设置左侧部件宽度
-        left_widget.setMinimumWidth(175)  # 减小最小宽度
-        left_widget.setMaximumWidth(200)  # 减小最大宽度
+        left_widget.setMinimumWidth(220)  # 适度增加宽度以容纳按钮
+        left_widget.setMaximumWidth(240)  # 适度增加最大宽度
         
         # 创建右侧聊天区域
         right_widget = QWidget()
@@ -843,14 +895,14 @@ class ChatWindow(QMainWindow):
         # 启动按钮检查定时器
         self.check_button_timer.start(1000)  # 每秒检查一次
     
-    def send_message(self):
+    def send_message(self, custom_filename=None):
         """发送消息"""
         message = self.input_text.toPlainText().strip()
         if message and self.driver and self.wait:
             self.input_text.clear()
             self.status_bar.showMessage("正在发送消息...")
             
-            chat_thread = ChatThread(self.driver, self.wait, message, "send")
+            chat_thread = ChatThread(self.driver, self.wait, message, "send", custom_filename)
             chat_thread.status_changed.connect(self.status_bar.showMessage)
             chat_thread.error_occurred.connect(self.handle_error)
             chat_thread.finished.connect(lambda: self.cleanup_thread(chat_thread))
@@ -977,6 +1029,7 @@ class ChatWindow(QMainWindow):
                 self.auto_mode = False
                 return
             self.current_question_index = 0
+            self.task_counter = 1  # 重置任务计数器
             self.auto_timer.start(5000)  # 每5秒发送一个问题
             self.auto_mode_btn.setText('停止自动')
         else:
@@ -1004,11 +1057,28 @@ class ChatWindow(QMainWindow):
             if self.current_question_index < len(self.questions):
                 question = self.questions[self.current_question_index]
                 self.input_text.setText(question)
-                self.send_message()
+                
+                # 根据用户选择决定文件命名方式
+                if self.use_sequence_naming.isChecked():
+                    custom_filename = f"{self.task_counter}.md"
+                    print(f"使用序号命名: {custom_filename}")
+                else:
+                    custom_filename = None
+                    print("使用AI生成的语义化文件名")
+                
+                self.send_message(custom_filename)
+                
+                # 增加计数器
+                self.task_counter += 1
                 
                 # 删除已发送的问题
                 self.questions.pop(self.current_question_index)
                 self.questions_list.takeItem(self.current_question_index)
+                
+                # 自动发送新对话命令（在发送下一个问题前开始新对话）
+                if self.questions:  # 如果还有更多问题，先开始新对话
+                    print("自动开始新对话...")
+                    self.new_chat()
                 
                 # 如果问题列表为空，停止自动模式
                 if not self.questions:
