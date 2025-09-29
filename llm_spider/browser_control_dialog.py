@@ -185,14 +185,14 @@ def wait_for_ai_response(driver, wait, filename):
     while retry_count < max_retries:
         try:
             # 等待AI开始回答（等待消息内容出现）
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.ds-markdown.ds-markdown--block")))
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div._4f9bf79.d7dc56a8._43c05b5")))
             msg_len = 5
             msg_list = [""] * msg_len
             idx = 0
             
             while True:
                 try:
-                    messages = driver.find_elements(By.CSS_SELECTOR, "div.ds-markdown.ds-markdown--block")
+                    messages = driver.find_elements(By.CSS_SELECTOR, "div._4f9bf79.d7dc56a8._43c05b5")
                     if not messages:
                         time.sleep(2)
                         continue

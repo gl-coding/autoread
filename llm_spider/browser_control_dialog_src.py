@@ -59,7 +59,7 @@ def process_markdown_content(content):
                     continue
                     
                 # 跳过"复制"行
-                if line.strip() == "复制":
+                if line.strip() in ["复制", "下载", "---"]:
                     skip_next = True
                     continue
 
@@ -260,7 +260,7 @@ def send_message(driver, wait, message):
     while retry_count < max_retries:
         try:
             # 等待并定位对话框输入框
-            chat_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "textarea#chat-input")))
+            chat_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "textarea#_27c9245 ds-scroll-area d96f2d2a")))
             print("机器人:找到对话框输入框")
             
             # 输入消息
@@ -359,11 +359,11 @@ def visit_deepseek():
             time.sleep(3)
             print("已进入聊天界面")
 
-            # print("点击深度思考...")
-            # deepsearch_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.ds-button.ds-button--primary.ds-button--filled.ds-button--rect.ds-button--m._3172d9f")))
-            # wait.until(EC.visibility_of(deepsearch_button))
-            # driver.execute_script("arguments[0].click();", deepsearch_button)           
-            # time.sleep(3)
+            print("点击深度思考...")
+            deepsearch_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.ds-button.ds-button--primary.ds-button--filled.ds-button--rect.ds-button--m._3172d9f")))
+            wait.until(EC.visibility_of(deepsearch_button))
+            driver.execute_script("arguments[0].click();", deepsearch_button)           
+            time.sleep(3)
 
             # print("点击联网搜索...")
             # search_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.ds-button.ds-button--primary.ds-button--filled.ds-button--rect.ds-button--m._3172d9f")))
@@ -519,7 +519,9 @@ class ChatWindow(QMainWindow):
         self.current_question_index = 0
         self.auto_mode = False
         self.auto_timer = None
-        self.is_floating = False  # 添加悬浮状态标志
+        self.is_floating = False
+        self.check_button_timer = QTimer()  # 添加定时器用于检查按钮
+        self.check_button_timer.timeout.connect(self.check_and_click_button)
         self.init_ui()
         self.start_browser()
         
@@ -696,26 +698,32 @@ class ChatWindow(QMainWindow):
         button_layout.setSpacing(10)
         
         self.send_button = QPushButton('发送')
+        self.network_button = QPushButton('联网')
+        self.deep_think_button = QPushButton('深度思考')  # 新增深度思考按钮
         self.new_chat_button = QPushButton('新对话')
-        self.floating_btn = QPushButton('📌')  # 移动悬浮按钮到这里
-        self.insert_button = QPushButton('插入')  # 添加插入按钮
+        self.floating_btn = QPushButton('📌')
+        self.insert_button = QPushButton('插入')
         
-        for btn in [self.send_button, self.new_chat_button, self.floating_btn, self.insert_button]:
+        for btn in [self.send_button, self.network_button, self.deep_think_button, self.new_chat_button, self.floating_btn, self.insert_button]:
             btn.setStyleSheet(button_style)
             btn.setMinimumWidth(80)
             btn.setFont(QFont('Arial', 11))
             btn.setToolTip({
                 self.send_button: '发送消息',
+                self.network_button: '联网',
+                self.deep_think_button: '深度思考',
                 self.new_chat_button: '开始新对话',
                 self.floating_btn: '窗口悬浮',
                 self.insert_button: '插入选中文本到问题列表'
             }[btn])
         
-        self.floating_btn.setCheckable(True)  # 设置悬浮按钮可选中
-        self.insert_button.setEnabled(False)  # 初始状态设置为禁用
+        self.floating_btn.setCheckable(True)
+        self.insert_button.setEnabled(False)
         
         button_layout.addWidget(self.send_button)
-        button_layout.addWidget(self.insert_button)  # 将插入按钮放在发送按钮旁边
+        button_layout.addWidget(self.network_button)
+        button_layout.addWidget(self.deep_think_button)  # 添加深度思考按钮到布局
+        button_layout.addWidget(self.insert_button)
         button_layout.addWidget(self.new_chat_button)
         button_layout.addWidget(self.floating_btn)
         
@@ -752,10 +760,12 @@ class ChatWindow(QMainWindow):
         self.remove_question_btn.clicked.connect(self.remove_question)
         self.edit_question_btn.clicked.connect(self.edit_question)
         self.auto_mode_btn.clicked.connect(self.toggle_auto_mode)
-        self.floating_btn.clicked.connect(self.toggle_floating)  # 连接悬浮按钮信号
+        self.floating_btn.clicked.connect(self.toggle_floating)
         self.questions_list.itemClicked.connect(self.question_selected)
-        self.chat_text.selectionChanged.connect(self.on_selection_changed)  # 连接文本选择变化信号
-        self.insert_button.clicked.connect(self.insert_selected_text)  # 连接插入按钮点击信号
+        self.chat_text.selectionChanged.connect(self.on_selection_changed)
+        self.insert_button.clicked.connect(self.insert_selected_text)
+        self.network_button.clicked.connect(self.on_network_clicked)
+        self.deep_think_button.clicked.connect(self.on_deep_think_clicked)  # 连接深度思考按钮信号
         
         # 设置快捷键
         self.input_text.installEventFilter(self)
@@ -791,6 +801,8 @@ class ChatWindow(QMainWindow):
         self.driver = driver
         self.wait = wait
         self.new_chat_button.setEnabled(True)
+        # 启动按钮检查定时器
+        self.check_button_timer.start(1000)  # 每秒检查一次
     
     def send_message(self):
         """发送消息"""
@@ -921,6 +933,10 @@ class ChatWindow(QMainWindow):
     
     def closeEvent(self, event):
         """处理窗口关闭事件"""
+        # 停止按钮检查定时器
+        if self.check_button_timer:
+            self.check_button_timer.stop()
+            
         # 停止自动发送定时器
         if self.auto_timer:
             self.auto_timer.stop()
@@ -1113,6 +1129,79 @@ class ChatWindow(QMainWindow):
                 }
             """)
         self.show()  # 重新显示窗口以应用新的窗口标志
+
+    def on_network_clicked(self):
+        """联网按钮点击事件"""
+        try:
+            if self.driver and self.wait:
+                self.status_bar.showMessage("正在启用联网搜索...")
+                
+                # 等待并获取所有匹配的按钮
+                buttons = self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.ds-button.ds-button--primary.ds-button--filled.ds-button--rect.ds-button--m._3172d9f")))
+                
+                if len(buttons) >= 2:  # 确保有至少两个按钮
+                    # 点击第二个按钮(联网搜索)
+                    self.wait.until(EC.visibility_of(buttons[1]))
+                    self.driver.execute_script("arguments[0].click();", buttons[1])
+                    time.sleep(3)
+                    self.status_bar.showMessage("联网搜索已启用")
+                else:
+                    raise Exception("未找到联网搜索按钮")
+            else:
+                QMessageBox.warning(self, '警告', '浏览器未就绪!')
+        except Exception as e:
+            self.status_bar.showMessage(f"启用联网搜索失败: {str(e)}")
+            QMessageBox.warning(self, '错误', f'启用联网搜索时出错: {str(e)}')
+
+    def on_deep_think_clicked(self):
+        """深度思考按钮点击事件"""
+        try:
+            if self.driver and self.wait:
+                self.status_bar.showMessage("正在启用深度思考...")
+                
+                # 等待并获取所有匹配的按钮
+                buttons = self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.ds-button.ds-button--primary.ds-button--filled.ds-button--rect.ds-button--m._3172d9f")))
+                
+                if len(buttons) >= 1:  # 确保至少有一个按钮
+                    # 点击第一个按钮(深度思考)
+                    self.wait.until(EC.visibility_of(buttons[0]))
+                    self.driver.execute_script("arguments[0].click();", buttons[0])
+                    time.sleep(3)
+                    self.status_bar.showMessage("深度思考已启用")
+                else:
+                    raise Exception("未找到深度思考按钮")
+            else:
+                QMessageBox.warning(self, '警告', '浏览器未就绪!')
+        except Exception as e:
+            self.status_bar.showMessage(f"启用深度思考失败: {str(e)}")
+            QMessageBox.warning(self, '错误', f'启用深度思考时出错: {str(e)}')
+
+    def check_and_click_button(self):
+        """检查并点击特定class的按钮"""
+        try:
+            if not self.driver or not self.wait:
+                return
+                
+            # 使用JavaScript检查按钮是否存在并可见
+            js_code = """
+                var btn = document.querySelector('div.ds-button.ds-button--secondary.ds-button--bordered.ds-button--rect.ds-button--m');
+                if (btn && btn.offsetParent !== null) {
+                    return true;
+                }
+                return false;
+            """
+            button_visible = self.driver.execute_script(js_code)
+            
+            if button_visible:
+                # 找到并点击按钮
+                button = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 
+                    "div.ds-button.ds-button--secondary.ds-button--bordered.ds-button--rect.ds-button--m")))
+                self.driver.execute_script("arguments[0].click();", button)
+                print("自动点击了确认按钮")
+                
+        except Exception as e:
+            # 这里我们不需要显示错误,因为按钮不存在是正常的情况
+            pass
 
 def main():
     app = QApplication(sys.argv)
