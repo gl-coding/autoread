@@ -78,9 +78,11 @@ def process_line(line_item):
     """全局函数，用于多进程处理"""
     line_idx, line = line_item
     print(f"{line_idx}: {line}")
+    st = time.time()
     prompt = Prompt()
     res = prompt.trans_segment(line)
     append_line_tofile(res, f"Jobs/res/{line_idx}.txt")
+    print(f"耗时: {time.time() - st}秒")
 
 def process_file_with_llm(file_path):
     # 确保输出目录存在
@@ -99,7 +101,7 @@ def process_file_with_llm(file_path):
             line_idx += 1
             idx_dic[line_idx] = line
     
-    with multiprocessing.Pool(processes=1) as pool:
+    with multiprocessing.Pool(processes=10) as pool:
         pool.map(process_line, idx_dic.items())
 
 if __name__ == "__main__":
