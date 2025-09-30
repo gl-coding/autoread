@@ -1,7 +1,8 @@
 import os
+import multiprocessing
 from llm_prompt import *
 
-MAX_LENGTH = 1500
+MAX_LENGTH = 1000
 #MAX_LENGTH = 200
 #PROMPT = "每一个句话都给出翻译，标注在原文后面括号中，给出这个段落中所有出现的固定搭配和解释，标注“固定搭配”，给出所有单词的音标和释义，标注“单词”"
 PROMPT = ""
@@ -73,17 +74,33 @@ def process_file(file_path):
         print(seg_line, len(seg_line))
     print(max_length)
 
-def process_file_with_llm(file_path):
+def process_line(line_item):
+    """全局函数，用于多进程处理"""
+    line_idx, line = line_item
+    print(f"{line_idx}: {line}")
     prompt = Prompt()
+    res = prompt.trans_segment(line)
+    append_line_tofile(res, f"Jobs/res/{line_idx}.txt")
+
+def process_file_with_llm(file_path):
+    # 确保输出目录存在
+    output_dir = "Jobs/res"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    line_idx = 0
+    idx_dic = {}
     with open(file_path, 'r') as file:
         content = file.read()
         for line in content.split("\n"):
             line = line.strip()
             if line == "":
                 continue
-            res = prompt.trans_segment(line)
-            append_line_tofile(res, "llm_res.txt")
-            break
+            line_idx += 1
+            idx_dic[line_idx] = line
+    
+    with multiprocessing.Pool(processes=1) as pool:
+        pool.map(process_line, idx_dic.items())
 
 if __name__ == "__main__":
     #process_file("book_tmp.txt")
