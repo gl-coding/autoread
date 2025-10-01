@@ -112,7 +112,12 @@ def format_file(file_path):
             line = line.strip()
             if not line or line == "---":
                 continue
-            res.append([line.strip("- ")])
+            #print(line)
+            if line.startswith("-"):
+                #print(res, line)
+                res[-1][0] = res[-1][0] + " " + line
+            else:
+                res.append([line])
     
     for i in range(len(res)):
         line = res[i][0]
@@ -134,6 +139,14 @@ def format_file(file_path):
             src_line = line.split("语法:")[1].strip()
             res[i].append("语法")
             res[i].append(src_line)
+        if "固定搭配:" in line and line.split("固定搭配:")[1].strip() != "":
+            src_line = line.split("固定搭配:")[1].strip()
+            res[i].append("固定搭配")
+            res[i].extend(src_line.split("-"))
+        if "单词:" in line and line.split("单词:")[1].strip() != "":
+            src_line = line.split("单词:")[1].strip()
+            res[i].append("单词")
+            res[i].extend(src_line.split("-"))
     for item in res:
         print(item)
 
@@ -144,6 +157,7 @@ def format_files(file_path):
     for file in files:
         if file.endswith(".txt"):
             format_file(os.path.join(file_path, file))
+            break
 
 if __name__ == "__main__":
     arg = sys.argv[1]
