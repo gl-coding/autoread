@@ -1,4 +1,4 @@
-import os
+import os, sys
 import multiprocessing
 from llm_prompt import *
 
@@ -8,8 +8,8 @@ MAX_LENGTH = 1000
 PROMPT = ""
 
 file_name_res = "Jobs/book_res.txt"
-if os.path.exists(file_name_res):
-    os.remove(file_name_res)
+# if os.path.exists(file_name_res):
+#     os.remove(file_name_res)
 
 def append_line_tofile(line, file_name=file_name_res):
     with open(file_name, 'a') as file:
@@ -104,7 +104,52 @@ def process_file_with_llm(file_path):
     with multiprocessing.Pool(processes=10) as pool:
         pool.map(process_line, idx_dic.items())
 
+def format_file(file_path):
+    res = []
+    with open(file_path, 'r') as file:
+        content = file.read()
+        for line in content.split("\n"):
+            line = line.strip()
+            if not line or line == "---":
+                continue
+            res.append([line.strip("- ")])
+    
+    for i in range(len(res)):
+        line = res[i][0]
+        if "【源段落】" in line and line.split("【源段落】")[1].strip() != "":
+            src_line = line.split("【源段落】")[1].strip()
+            res[i].append("源段落")
+            res[i].append(src_line)
+        if "原文:" in line and line.split("原文:")[1].strip() != "":
+            num = line.split("原文:")[0].strip()
+            src_line = line.split("原文:")[1].strip()
+            res[i].append(num)
+            res[i].append("原文")
+            res[i].append(src_line)
+        if "翻译:" in line and line.split("翻译:")[1].strip() != "":
+            src_line = line.split("翻译:")[1].strip()
+            res[i].append("翻译")
+            res[i].append(src_line)
+        if "语法:" in line and line.split("语法:")[1].strip() != "":
+            src_line = line.split("语法:")[1].strip()
+            res[i].append("语法")
+            res[i].append(src_line)
+    for item in res:
+        print(item)
+
+def format_files(file_path):
+    #遍历文件夹下的所有文件，按照序号大小排序
+    files = [f for f in os.listdir(file_path) if f.endswith(".txt")]
+    files.sort(key=lambda x: int(x.split(".")[0]))
+    for file in files:
+        if file.endswith(".txt"):
+            format_file(os.path.join(file_path, file))
+
 if __name__ == "__main__":
+    arg = sys.argv[1]
     #process_file("book_tmp.txt")
-    process_file("Jobs/book.txt")
-    process_file_with_llm("Jobs/book_res.txt")
+    if arg == "1":
+        process_file("Jobs/book.txt")
+        process_file_with_llm("Jobs/book_res.txt")
+    elif arg == "2":
+        format_files("Jobs/res")
