@@ -142,11 +142,11 @@ def format_file(file_path):
         if "固定搭配:" in line and line.split("固定搭配:")[1].strip() != "":
             src_line = line.split("固定搭配:")[1].strip()
             res[i].append("固定搭配")
-            res[i].extend(src_line.split("-"))
+            res[i].extend([it.strip() for it in src_line.split("-")[1:] if it.strip() != ""])
         if "单词:" in line and line.split("单词:")[1].strip() != "":
             src_line = line.split("单词:")[1].strip()
             res[i].append("单词")
-            res[i].extend(src_line.split("-"))
+            res[i].extend([it.strip() for it in src_line.split("-")[1:] if it.strip() != ""])
     for item in res:
         print(item)
 
