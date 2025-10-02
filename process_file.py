@@ -128,7 +128,7 @@ def format_file(file_path):
         if "原文:" in line and line.split("原文:")[1].strip() != "":
             num = line.split("原文:")[0].strip()
             src_line = line.split("原文:")[1].strip()
-            res[i].append(num)
+            res[i].append(num.strip("."))
             res[i].append("原文")
             res[i].append(src_line)
         if "翻译:" in line and line.split("翻译:")[1].strip() != "":
@@ -147,8 +147,7 @@ def format_file(file_path):
             src_line = line.split("单词:")[1].strip()
             res[i].append("单词")
             res[i].extend([it.strip() for it in src_line.split("-")[1:] if it.strip() != ""])
-    for item in res:
-        print(item)
+    for item in res: print(item)
 
 def format_files(file_path):
     #遍历文件夹下的所有文件，按照序号大小排序
