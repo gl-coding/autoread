@@ -119,12 +119,20 @@ def format_file(file_path):
             else:
                 res.append([line])
     
+    src_flag = False
     for i in range(len(res)):
         line = res[i][0]
         if "【源段落】" in line and line.split("【源段落】")[1].strip() != "":
             src_line = line.split("【源段落】")[1].strip()
             res[i].append("源段落")
             res[i].append(src_line)
+        elif "【源段落】" in line and line.split("【源段落】")[1].strip() == "":
+            src_flag = True
+            continue
+        if src_flag:
+            res[i-1].append("源段落")
+            res[i-1].append(line)
+            src_flag = False
         if "原文:" in line and line.split("原文:")[1].strip() != "":
             num = line.split("原文:")[0].strip()
             src_line = line.split("原文:")[1].strip()
