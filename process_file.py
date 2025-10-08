@@ -125,39 +125,39 @@ def format_file(file_path):
         line = res[i][0]
         if "【源段落】" in line and line.split("【源段落】")[1].strip() != "":
             src_line = line.split("【源段落】")[1].strip()
-            res[i].append("源段落")
+            res[i].append("segs")
             res[i].append(src_line)
             res_dic["src"] = src_line
         elif "【源段落】" in line and line.split("【源段落】")[1].strip() == "":
             src_flag = True
             continue
         if src_flag:
-            res[i-1].append("源段落")
+            res[i-1].append("segs")
             res[i-1].append(line)
             src_flag = False
             res_dic["src"] = line
         if "原文:" in line and line.split("原文:")[1].strip() != "":
             num = line.split("原文:")[0].strip()
             src_line = line.split("原文:")[1].strip()
-            res[i].append("原文")
+            res[i].append("text")
             res[i].append(num.strip("."))
             #res[i].append("原文")
             res[i].append(src_line)
         if "翻译:" in line and line.split("翻译:")[1].strip() != "":
             src_line = line.split("翻译:")[1].strip()
-            res[i].append("翻译")
+            res[i].append("trans")
             res[i].append(src_line)
         if "语法:" in line and line.split("语法:")[1].strip() != "":
             src_line = line.split("语法:")[1].strip()
-            res[i].append("语法")
+            res[i].append("gram")
             res[i].append(src_line)
         if "固定搭配:" in line and line.split("固定搭配:")[1].strip() != "":
             src_line = line.split("固定搭配:")[1].strip()
-            res[i].append("固定搭配")
+            res[i].append("phrase")
             res[i].extend([it.strip() for it in src_line.split("-")[1:] if it.strip() != ""])
         if "单词:" in line and line.split("单词:")[1].strip() != "":
             src_line = line.split("单词:")[1].strip()
-            res[i].append("单词")
+            res[i].append("word")
             res[i].extend([it.strip() for it in src_line.split("-")[1:] if it.strip() != ""])
 
     res_dict_total = []
@@ -170,15 +170,18 @@ def format_file(file_path):
         data_type = item[1]
         content = item[2:]
         res_dict_local[data_type] = content
-        if data_type == "单词" or data_type == "源段落":
-            print(res_dict_local)
+        if data_type == "word" or data_type == "segs":
+            #print(res_dict_local)
             res_dict_total.append(res_dict_local)
             res_dict_local = {}
     #print(res_dict_total)
 
         #print(item, data_type, content)
     #print(res_dic)
-    print(len(res_dict_total))
+    #print(len(res_dict_total))
+    for item in res_dict_total:
+        src = item.get("text", [])
+        print(src)
 
 def format_files(file_path):
     #遍历文件夹下的所有文件，按照序号大小排序
