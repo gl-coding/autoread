@@ -168,10 +168,15 @@ def format_file(file_path):
             continue
         #print("item-----", item)
         data_type = item[1]
-        content = item[2:]
-        res_dict_local[data_type] = content
+        if data_type == "text":
+            res_dict_local[data_type] = " ".join(item[3:])
+        elif data_type in ["trans", "gram"]:
+            res_dict_local[data_type] = " ".join(item[2:])
+        else:
+            content = item[2:]
+            res_dict_local[data_type] = content
         if data_type == "word" or data_type == "segs":
-            #print(res_dict_local)
+            print(res_dict_local)
             res_dict_total.append(res_dict_local)
             res_dict_local = {}
     #print(res_dict_total)
