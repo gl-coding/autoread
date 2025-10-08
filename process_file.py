@@ -104,6 +104,14 @@ def process_file_with_llm(file_path):
     with multiprocessing.Pool(processes=10) as pool:
         pool.map(process_line, idx_dic.items())
 
+def split_words(words):
+    pre  = words.find("[")
+    post = words.find("]")
+    word = words[0:pre].strip()
+    yinbiao = words[pre:post+1].strip()
+    mean = words[post+1:].strip()
+    return word, yinbiao, mean
+
 def format_file(file_path):
     res = []
     with open(file_path, 'r') as file:
@@ -185,8 +193,20 @@ def format_file(file_path):
     #print(res_dic)
     #print(len(res_dict_total))
     for item in res_dict_total:
-        src = item.get("text", [])
-        print(src)
+        text = item.get("text", "")
+        #if text != "": print(text)
+        trans = item.get("trans", "")
+        if trans != "": print(trans)
+        gram = item.get("gram", "")
+        if gram != "": print(gram)
+        phrase = item.get("phrase", "")
+        if phrase != "": print(phrase)
+        word = item.get("word", [])
+        if word: 
+            print(word)
+            for w in word:
+                word, yinbiao, mean = split_words(w)
+                print(word, yinbiao, mean)
 
 def format_files(file_path):
     #遍历文件夹下的所有文件，按照序号大小排序
