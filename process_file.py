@@ -118,6 +118,7 @@ def format_file(file_path):
                 res[-1][0] = res[-1][0] + " " + line
             else:
                 res.append([line])
+    res_dic = {}
     
     src_flag = False
     for i in range(len(res)):
@@ -126,6 +127,7 @@ def format_file(file_path):
             src_line = line.split("【源段落】")[1].strip()
             res[i].append("源段落")
             res[i].append(src_line)
+            res_dic["src"] = src_line
         elif "【源段落】" in line and line.split("【源段落】")[1].strip() == "":
             src_flag = True
             continue
@@ -133,11 +135,12 @@ def format_file(file_path):
             res[i-1].append("源段落")
             res[i-1].append(line)
             src_flag = False
+            res_dic["src"] = line
         if "原文:" in line and line.split("原文:")[1].strip() != "":
             num = line.split("原文:")[0].strip()
             src_line = line.split("原文:")[1].strip()
-            res[i].append(num.strip("."))
             res[i].append("原文")
+            res[i].append(num.strip("."))
             res[i].append(src_line)
         if "翻译:" in line and line.split("翻译:")[1].strip() != "":
             src_line = line.split("翻译:")[1].strip()
@@ -155,7 +158,25 @@ def format_file(file_path):
             src_line = line.split("单词:")[1].strip()
             res[i].append("单词")
             res[i].extend([it.strip() for it in src_line.split("-")[1:] if it.strip() != ""])
-    for item in res: print(item)
+
+    res_dict_total = []
+    res_dict_local = {}
+    for item in res: 
+        print(len(item))
+        if len(item) < 2:
+            continue
+        data_type = item[1]
+        content = item[2:]
+        res_dict_local[data_type] = content
+        if data_type == "单词":
+            print(res_dict_local)
+            res_dict_total.append(res_dict_local)
+            res_dict_local = {}
+    #print(res_dict_total)
+
+        #print(item, data_type, content)
+    #print(res_dic)
+    print(len(res_dict_total))
 
 def format_files(file_path):
     #遍历文件夹下的所有文件，按照序号大小排序
