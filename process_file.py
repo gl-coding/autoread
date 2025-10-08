@@ -141,6 +141,7 @@ def format_file(file_path):
             src_line = line.split("原文:")[1].strip()
             res[i].append("原文")
             res[i].append(num.strip("."))
+            #res[i].append("原文")
             res[i].append(src_line)
         if "翻译:" in line and line.split("翻译:")[1].strip() != "":
             src_line = line.split("翻译:")[1].strip()
@@ -162,13 +163,14 @@ def format_file(file_path):
     res_dict_total = []
     res_dict_local = {}
     for item in res: 
-        print(len(item))
+        #print(len(item))
         if len(item) < 2:
             continue
+        #print("item-----", item)
         data_type = item[1]
         content = item[2:]
         res_dict_local[data_type] = content
-        if data_type == "单词":
+        if data_type == "单词" or data_type == "源段落":
             print(res_dict_local)
             res_dict_total.append(res_dict_local)
             res_dict_local = {}
