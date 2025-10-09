@@ -1,6 +1,7 @@
 import os, sys
 import multiprocessing
 from llm_prompt import *
+from collections import Counter
 
 MAX_LENGTH = 1000
 #MAX_LENGTH = 200
@@ -108,6 +109,8 @@ def process_file_with_llm(file_path):
         pool.map(process_line, idx_dic.items())
 
 def split_words(words):
+    if "[" not in words:
+        return words, "", ""
     pre  = words.find("[")
     post = words.find("]")
     word = words[0:pre].strip()
@@ -195,8 +198,11 @@ def format_file(file_path):
         #print(item, data_type, content)
     #print(res_dic)
     #print(len(res_dict_total))
+    words_all = []
+    text_all = []
     for item in res_dict_total:
         text = item.get("text", "")
+        if text != "": text_all.append(text)
         #if text != "": print(text)
         trans = item.get("trans", "")
         if trans != "": print(trans)
@@ -210,15 +216,30 @@ def format_file(file_path):
             for w in word:
                 word, yinbiao, mean = split_words(w)
                 print(word, yinbiao, mean)
+                if yinbiao != "":
+                    words_all.append(word)
+    return text_all, words_all
 
 def format_files(file_path):
-    #遍历文件夹下的所有文件，按照序号大小排序
+    all_words = []
+    all_text = []
+    #遍历文件夹下的所有文件，按照序号大小排序，然后依次处理
     files = [f for f in os.listdir(file_path) if f.endswith(".txt")]
     files.sort(key=lambda x: int(x.split(".")[0]))
     for file in files:
         if file.endswith(".txt"):
-            format_file(os.path.join(file_path, file))
-            break
+            text_in_file, words_in_file = format_file(os.path.join(file_path, file))
+            print(text_in_file)
+            print(words_in_file)
+            all_words.extend(words_in_file)
+            all_text.extend(text_in_file)
+    print(len(all_words))
+    print(len(all_text))
+    print(all_text[:10])
+    #统计每个单词出现的次数，并按照出现次数降序排序，并打印前100个单词
+    word_count = Counter(all_words)
+    word_count = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
+    print(word_count)
 
 if __name__ == "__main__":
     arg = sys.argv[1]
