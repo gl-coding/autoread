@@ -7,7 +7,10 @@ MAX_LENGTH = 1000
 #PROMPT = "每一个句话都给出翻译，标注在原文后面括号中，给出这个段落中所有出现的固定搭配和解释，标注“固定搭配”，给出所有单词的音标和释义，标注“单词”"
 PROMPT = ""
 
-file_name_res = "Jobs/book_res.txt"
+dir_name = "Jobs/"
+res_dir = dir_name + "res"
+file_name = dir_name + "book.txt"
+file_name_res = dir_name + "book_res.txt"
 # if os.path.exists(file_name_res):
 #     os.remove(file_name_res)
 
@@ -81,12 +84,12 @@ def process_line(line_item):
     st = time.time()
     prompt = Prompt()
     res = prompt.trans_segment(line)
-    append_line_tofile(res, f"Jobs/res/{line_idx}.txt")
+    append_line_tofile(res, f"{res_dir}/{line_idx}.txt")
     print(f"耗时: {time.time() - st}秒")
 
 def process_file_with_llm(file_path):
     # 确保输出目录存在
-    output_dir = "Jobs/res"
+    output_dir = res_dir
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
@@ -221,7 +224,7 @@ if __name__ == "__main__":
     arg = sys.argv[1]
     #process_file("book_tmp.txt")
     if arg == "1":
-        process_file("Jobs/book.txt")
-        process_file_with_llm("Jobs/book_res.txt")
+        process_file(file_name)
+        process_file_with_llm(file_name_res)
     elif arg == "2":
-        format_files("Jobs/res")
+        format_files(res_dir)
