@@ -2,6 +2,8 @@ import os, sys
 import multiprocessing
 from llm_prompt import *
 from collections import Counter
+from rapidfuzz.distance import Levenshtein
+import numpy as np
 
 MAX_LENGTH = 1000
 #MAX_LENGTH = 200
@@ -220,6 +222,44 @@ def format_file(file_path):
                     words_all.append(word)
     return text_all, words_all
 
+def words_cluster(words_all):
+    print("聚类开始")
+    word_count = Counter(words_all)
+    word_sort = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
+    print(len(words_all), len(word_sort))
+    word_list = [it[0] for it in word_sort]
+    n = len(word_list)
+    dist_mat = np.zeros((n, n))
+
+    for i in range(n):
+        for j in range(n):
+            dist_mat[i, j] = Levenshtein.normalized_similarity(word_list[i], word_list[j])
+    print("聚类结束")
+
+    # 对每个词找出最相似的 top-k
+    topk = 5
+    similar_words = {}
+
+    for i in range(n):
+        # 对第 i 行的相似度排序（从高到低）
+        # argsort 默认升序，所以要加负号
+        idx_sorted = np.argsort(-dist_mat[i])
+        
+        # 跳过自己（相似度=100）
+        idx_sorted = [j for j in idx_sorted if j != i]
+        
+        # 取 top-k 相似词
+        top_indices = idx_sorted[:topk]
+        top_pairs = [(word_list[j], dist_mat[i, j]) for j in top_indices]
+        
+        similar_words[word_list[i]] = top_pairs
+
+    # 输出结果
+    for w, sims in similar_words.items():
+        print(f"\n【{w}】的相似词：")
+        for sw, sim in sims:
+            print(f"   {sw:<10}  相似度={sim:.2f}")
+
 def format_files(file_path):
     all_words = []
     all_text = []
@@ -240,12 +280,13 @@ def format_files(file_path):
         for item in all_text[:10]:
             print(item)
     #处理单词  
-    if False:
+    if True:
         #统计每个单词出现的次数，并按照出现次数降序排序，并打印前100个单词
         word_count = Counter(all_words)
         word_sort = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
         print(len(all_words), len(word_sort))
         #print(all_text[:100])
+        words_cluster(all_words)
 
 if __name__ == "__main__":
     arg = sys.argv[1]
