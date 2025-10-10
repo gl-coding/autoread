@@ -233,13 +233,19 @@ def format_files(file_path):
             print(words_in_file)
             all_words.extend(words_in_file)
             all_text.extend(text_in_file)
-    print(len(all_words))
-    print(len(all_text))
-    print(all_text[:10])
-    #统计每个单词出现的次数，并按照出现次数降序排序，并打印前100个单词
-    word_count = Counter(all_words)
-    word_count = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
-    print(word_count)
+    #处理句子，得到整片文章的序列
+    if True:
+        print(len(all_text))
+        #print(all_text[:10])
+        for item in all_text[:10]:
+            print(item)
+    #处理单词  
+    if False:
+        #统计每个单词出现的次数，并按照出现次数降序排序，并打印前100个单词
+        word_count = Counter(all_words)
+        word_sort = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
+        print(len(all_words), len(word_sort))
+        #print(all_text[:100])
 
 if __name__ == "__main__":
     arg = sys.argv[1]
