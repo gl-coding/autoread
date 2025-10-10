@@ -3,7 +3,9 @@ import multiprocessing
 from llm_prompt import *
 from collections import Counter
 from rapidfuzz.distance import Levenshtein
+from rapidfuzz.distance import DamerauLevenshtein
 import numpy as np
+import hashlib
 
 MAX_LENGTH = 1000
 #MAX_LENGTH = 200
@@ -197,30 +199,40 @@ def format_file(file_path):
             res_dict_local = {}
     #print(res_dict_total)
 
-        #print(item, data_type, content)
-    #print(res_dic)
-    #print(len(res_dict_total))
-    words_all = []
-    text_all = []
+    words_all  = []
+    text_all   = []
+    words_info = {}
+    sentence_info = {}
     for item in res_dict_total:
+        key = ""
         text = item.get("text", "")
-        if text != "": text_all.append(text)
+        if text != "": 
+            text_all.append(text)
+            key = hashlib.md5(text.encode()).hexdigest()
+            sentence_info[key] = {"text": text}
+        else:
+            continue
         #if text != "": print(text)
         trans = item.get("trans", "")
-        if trans != "": print(trans)
+        if trans != "": 
+            sentence_info[key]["trans"] = trans
         gram = item.get("gram", "")
-        if gram != "": print(gram)
+        if gram != "": 
+            sentence_info[key]["gram"] = gram
         phrase = item.get("phrase", "")
-        if phrase != "": print(phrase)
+        if phrase != "": 
+            sentence_info[key]["phrase"] = phrase
         word = item.get("word", [])
         if word: 
-            print(word)
+            #print(word)
             for w in word:
                 word, yinbiao, mean = split_words(w)
-                print(word, yinbiao, mean)
+                #print(word, yinbiao, mean)
                 if yinbiao != "":
+                    words_info[word] = (yinbiao, mean)
                     words_all.append(word)
-    return text_all, words_all
+            sentence_info[key]["word"] = words_info
+    return text_all, words_all, words_info, sentence_info
 
 def words_cluster(words_all):
     print("聚类开始")
@@ -233,7 +245,8 @@ def words_cluster(words_all):
 
     for i in range(n):
         for j in range(n):
-            dist_mat[i, j] = Levenshtein.normalized_similarity(word_list[i], word_list[j])
+            #dist_mat[i, j] = Levenshtein.normalized_similarity(word_list[i], word_list[j])
+            dist_mat[i, j] = DamerauLevenshtein.normalized_similarity(word_list[i], word_list[j])
     print("聚类结束")
 
     # 对每个词找出最相似的 top-k
@@ -262,25 +275,36 @@ def words_cluster(words_all):
 
 def format_files(file_path):
     all_words = []
-    all_text = []
+    all_text  = []
+    all_words_info = {}
+    all_sentence_info = {}
     #遍历文件夹下的所有文件，按照序号大小排序，然后依次处理
     files = [f for f in os.listdir(file_path) if f.endswith(".txt")]
     files.sort(key=lambda x: int(x.split(".")[0]))
     for file in files:
         if file.endswith(".txt"):
-            text_in_file, words_in_file = format_file(os.path.join(file_path, file))
-            print(text_in_file)
-            print(words_in_file)
+            text_in_file, words_in_file, words_info, sentence_info = format_file(os.path.join(file_path, file))
+            # print(text_in_file)
+            # print(words_in_file)
             all_words.extend(words_in_file)
             all_text.extend(text_in_file)
+            all_words_info.update(words_info)
+            all_sentence_info.update(sentence_info)
+            break
     #处理句子，得到整片文章的序列
-    if True:
+    if False:
         print(len(all_text))
         #print(all_text[:10])
-        for item in all_text[:10]:
+        #for item in all_text[:10]:
+        for item in all_text:
             print(item)
+            key = hashlib.md5(item.encode()).hexdigest()
+            sentence_info = all_sentence_info[key]
+            print(sentence_info)
+            break
     #处理单词  
-    if True:
+    #if True:
+    if False:
         #统计每个单词出现的次数，并按照出现次数降序排序，并打印前100个单词
         word_count = Counter(all_words)
         word_sort = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
