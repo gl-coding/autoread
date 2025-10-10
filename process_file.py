@@ -201,7 +201,7 @@ def format_file(file_path):
 
     words_all  = []
     text_all   = []
-    words_info = {}
+    words_info_all = {}
     sentence_info = {}
     for item in res_dict_total:
         key = ""
@@ -212,7 +212,7 @@ def format_file(file_path):
             sentence_info[key] = {"text": text}
         else:
             continue
-        #if text != "": print(text)
+        print(text)
         trans = item.get("trans", "")
         if trans != "": 
             sentence_info[key]["trans"] = trans
@@ -224,15 +224,17 @@ def format_file(file_path):
             sentence_info[key]["phrase"] = phrase
         word = item.get("word", [])
         if word: 
-            #print(word)
+            print(word)
+            words_info = {}
             for w in word:
                 word, yinbiao, mean = split_words(w)
                 #print(word, yinbiao, mean)
                 if yinbiao != "":
-                    words_info[word] = (yinbiao, mean)
                     words_all.append(word)
+                    words_info[word] = (yinbiao, mean)
+                    words_info_all[word] = (yinbiao, mean)
             sentence_info[key]["word"] = words_info
-    return text_all, words_all, words_info, sentence_info
+    return text_all, words_all, words_info_all, sentence_info
 
 def words_cluster(words_all):
     print("聚类开始")
@@ -290,9 +292,8 @@ def format_files(file_path):
             all_text.extend(text_in_file)
             all_words_info.update(words_info)
             all_sentence_info.update(sentence_info)
-            break
     #处理句子，得到整片文章的序列
-    if False:
+    if True:
         print(len(all_text))
         #print(all_text[:10])
         #for item in all_text[:10]:
@@ -301,7 +302,6 @@ def format_files(file_path):
             key = hashlib.md5(item.encode()).hexdigest()
             sentence_info = all_sentence_info[key]
             print(sentence_info)
-            break
     #处理单词  
     #if True:
     if False:
