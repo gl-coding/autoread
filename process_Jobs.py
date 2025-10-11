@@ -152,23 +152,13 @@ def words_cluster(words_all):
             #dist_mat[i, j] = Levenshtein.normalized_similarity(word_list[i], word_list[j])
             #dist_mat[i, j] = DamerauLevenshtein.normalized_similarity(word_list[i], word_list[j])
     print("聚类结束")
-
-    # 对每个词找出最相似的 top-k
-    topk = 5
+    topk = 5 # 对每个词找出最相似的 top-k
     similar_words = {}
-
     for i in range(n):
-        # 对第 i 行的相似度排序（从高到低）
-        # argsort 默认升序，所以要加负号
-        idx_sorted = np.argsort(-dist_mat[i])
-        
-        # 跳过自己（相似度=100）
-        idx_sorted = [j for j in idx_sorted if j != i]
-        
-        # 取 top-k 相似词
-        top_indices = idx_sorted[:topk]
+        idx_sorted = np.argsort(-dist_mat[i]) # 对第 i 行的相似度排序（从高到低），argsort 默认升序，所以要加负号
+        idx_sorted = [j for j in idx_sorted if j != i] # 跳过自己（相似度=100）
+        top_indices = idx_sorted[:topk] # 取 top-k 相似词
         top_pairs = [(word_list[j], dist_mat[i, j]) for j in top_indices]
-        
         similar_words[word_list[i]] = top_pairs
 
     # 输出结果
