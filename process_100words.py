@@ -46,16 +46,34 @@ def process_text():
             continue
         res_new.append(r)
 
+    res_new_new = []
+    word_pre = ""
+    for r in res_new:
+        if r.endswith("eng_flag"): r = r.replace("eng_flag", "")
+        word = ""
+        if "/" in r: 
+            word = r.split("/")[0]
+            word_pre = word
+        else:
+            # 判断r中是否全部都是中文
+            if is_all_chinese(r):
+                continue
+                print(r)
+            if not_chinese(r):
+                continue
+                print(r)
+            else:
+                #print(r)
+                #continue
+                pass
+        res_new_new.append(r)
+    exit()
+
     idx = 0
     merged_dir = pre_dir + 'merged_results'
     with open(os.path.join(merged_dir, 'merged_ocr_results_core_words.txt'), 'w', encoding='utf-8') as fw:
-        for r in res_new:
+        for r in res_new_new:
             idx += 1
-            if r.endswith("eng_flag"):
-                r = r.replace("eng_flag", "")
-                #ch_r = func_call(r, MODEL_NAME, "translate")
-                ch_r = trans_words(r)
-                r = r + " " + ch_r
             print(f"{idx}: {r}")
             fw.write(r)
             fw.write('\n')

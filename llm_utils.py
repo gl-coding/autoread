@@ -1,13 +1,14 @@
 import os,time,multiprocessing
 from llm_prompt import *
 
-pre_dir = "prideAndPrejudice/"
+#pre_dir = "prideAndPrejudice/"
+pre_dir = "100words/"
 
 def is_all_chinese(l):
     for char in l:
         if not (('\u4e00' <= char <= '\u9fff') or 
                 ('\u3400' <= char <= '\u4dbf') or
-                char in '，、。！？；：「」『』（）【】《》.；“”：; (){}[]'):
+                char in '，、。！？；：「」『』（）【】《》.；“”：; (){}[]":，'):
             return False
     return True
 
