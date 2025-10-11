@@ -123,6 +123,21 @@ def split_words(words):
     return word, yinbiao, mean
 
 def words_cluster(words_all):
+    def get_ngrams(text: str, n: int = 2) -> set:
+        if n < 1: return set()
+        ngrams = set(text[i:i+n] for i in range(len(text) - n + 1))
+        return ngrams
+    #two-gram dice similarity
+    def two_gram_dice_similarity(s1: str, s2: str) -> float:
+        g1, g2 = get_ngrams(s1, n=2), get_ngrams(s2, n=2)
+        if not g1 and not g2: return 1.0
+        intersection_size = len(g1.intersection(g2))
+        size_g1, size_g2 = len(g1), len(g2)
+        denominator = size_g1 + size_g2
+        if denominator == 0: return 0.0 # 理论上上面已处理两个空集的情况
+        similarity = (2 * intersection_size) / denominator
+        return similarity
+
     print("聚类开始")
     word_count = Counter(words_all)
     word_sort = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
@@ -133,7 +148,8 @@ def words_cluster(words_all):
 
     for i in range(n):
         for j in range(n):
-            dist_mat[i, j] = Levenshtein.normalized_similarity(word_list[i], word_list[j])
+            dist_mat[i, j] = two_gram_dice_similarity(word_list[i], word_list[j])
+            #dist_mat[i, j] = Levenshtein.normalized_similarity(word_list[i], word_list[j])
             #dist_mat[i, j] = DamerauLevenshtein.normalized_similarity(word_list[i], word_list[j])
     print("聚类结束")
 
@@ -288,6 +304,7 @@ def format_single_file(file_path):
 
 def format_files(file_path):
     all_text  = []
+    all_text_idmap = {}
 
     all_words = []
     all_words_info = {}
@@ -318,9 +335,12 @@ def format_files(file_path):
         print(len(all_text))
         #print(all_text[:10])
         #for item in all_text[:10]:
+        cnt = -1
         for item in all_text:
+            cnt += 1
             print(item)
             key = hashlib.md5(item.encode()).hexdigest()
+            all_text_idmap[key] = cnt
             sentence_info = all_sentence_info[key]
             print(sentence_info)
     #处理单词聚类
