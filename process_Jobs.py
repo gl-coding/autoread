@@ -262,7 +262,7 @@ def format_single_file(file_path):
             sentence_info[key]["gram"] = gram
         phrase = item.get("phrase", "")
         if phrase: 
-            print(phrase)
+            #print(phrase)
             phrase_info = {}
             for p in phrase:
                 sps = p.split(":")
@@ -273,7 +273,7 @@ def format_single_file(file_path):
             phrase_info_file.update(phrase_info)
         word = item.get("word", [])
         if word: 
-            print(word)
+            #print(word)
             words_info = {}
             for w in word:
                 word, yinbiao, mean = split_words(w)
@@ -324,7 +324,7 @@ def format_files(file_path):
             sentence_info = all_sentence_info[key]
             print(sentence_info)
     #处理单词聚类
-    if False:
+    if True:
         #统计每个单词出现的次数，并按照出现次数降序排序，并打印前100个单词
         word_count = Counter(all_words)
         word_sort = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
