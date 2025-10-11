@@ -238,8 +238,10 @@ def format_single_file(file_path):
     #print(res_dict_total)
 
     words_all  = []
+    phrase_all = []
     text_all   = []
     words_info_all = {}
+    phrase_info_file = {}
     sentence_info = {}
     word_sentence = {}
     for item in res_dict_total:
@@ -259,8 +261,16 @@ def format_single_file(file_path):
         if gram != "": 
             sentence_info[key]["gram"] = gram
         phrase = item.get("phrase", "")
-        if phrase != "": 
-            sentence_info[key]["phrase"] = phrase
+        if phrase: 
+            print(phrase)
+            phrase_info = {}
+            for p in phrase:
+                sps = p.split(":")
+                if len(sps) != 2: continue
+                phrase_info[sps[0]] = sps[1]
+                phrase_all.append(sps[0])
+            sentence_info[key]["phrase"] = phrase_info
+            phrase_info_file.update(phrase_info)
         word = item.get("word", [])
         if word: 
             print(word)
@@ -271,15 +281,20 @@ def format_single_file(file_path):
                 if yinbiao != "":
                     words_all.append(word)
                     words_info[word] = (yinbiao, mean)
-                    words_info_all[word] = (yinbiao, mean)
                     word_sentence.setdefault(word, []).append(text)
             sentence_info[key]["word"] = words_info
-    return text_all, words_all, words_info_all, sentence_info, word_sentence
+            words_info_all.update(words_info)
+    return text_all, words_all, words_info_all, sentence_info, word_sentence, phrase_all, phrase_info_file
 
 def format_files(file_path):
-    all_words = []
     all_text  = []
+
+    all_words = []
     all_words_info = {}
+
+    all_phrase = []
+    all_phrase_info = {}
+
     all_sentence_info = {}
     all_word_sentence = {}
     #遍历文件夹下的所有文件，按照序号大小排序，然后依次处理
@@ -287,12 +302,14 @@ def format_files(file_path):
     files.sort(key=lambda x: int(x.split(".")[0]))
     for file in files:
         if file.endswith(".txt"):
-            text_in_file, words_in_file, words_info, sentence_info, word_sentence = format_single_file(os.path.join(file_path, file))
+            text_in_file, words_in_file, words_info, sentence_info, word_sentence, phrase_all, phrase_info_file = format_single_file(os.path.join(file_path, file))
             # print(text_in_file)
             # print(words_in_file)
-            all_words.extend(words_in_file)
             all_text.extend(text_in_file)
+            all_words.extend(words_in_file)
             all_words_info.update(words_info)
+            all_phrase.extend(phrase_all)
+            all_phrase_info.update(phrase_info_file)
             all_sentence_info.update(sentence_info)
             for word, sentences in word_sentence.items():
                 all_word_sentence.setdefault(word, []).extend(sentences)
@@ -306,7 +323,7 @@ def format_files(file_path):
             key = hashlib.md5(item.encode()).hexdigest()
             sentence_info = all_sentence_info[key]
             print(sentence_info)
-    #处理单词  
+    #处理单词聚类
     if False:
         #统计每个单词出现的次数，并按照出现次数降序排序，并打印前100个单词
         word_count = Counter(all_words)
@@ -314,10 +331,15 @@ def format_files(file_path):
         print(len(all_words), len(word_sort))
         #print(all_text[:100])
         words_cluster(all_words)
-
-    if True:
+    #处理单词倒排索引
+    if False:
         for word, sentences in all_word_sentence.items():
             print(word, sentences)
+    #处理短语倒排索引
+    if False:
+        for phrase, mean in all_phrase_info.items(): print(phrase, mean)
+        #for phrase in all_phrase: print(phrase)
+        print(len(all_phrase))
 
 if __name__ == "__main__":
     arg = sys.argv[1]
