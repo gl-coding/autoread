@@ -122,7 +122,45 @@ def split_words(words):
     mean = words[post+1:].strip()
     return word, yinbiao, mean
 
-def format_file(file_path):
+def words_cluster(words_all):
+    print("聚类开始")
+    word_count = Counter(words_all)
+    word_sort = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
+    print(len(words_all), len(word_sort))
+    word_list = [it[0] for it in word_sort]
+    n = len(word_list)
+    dist_mat = np.zeros((n, n))
+
+    for i in range(n):
+        for j in range(n):
+            dist_mat[i, j] = Levenshtein.normalized_similarity(word_list[i], word_list[j])
+            #dist_mat[i, j] = DamerauLevenshtein.normalized_similarity(word_list[i], word_list[j])
+    print("聚类结束")
+
+    # 对每个词找出最相似的 top-k
+    topk = 5
+    similar_words = {}
+
+    for i in range(n):
+        # 对第 i 行的相似度排序（从高到低）
+        # argsort 默认升序，所以要加负号
+        idx_sorted = np.argsort(-dist_mat[i])
+        
+        # 跳过自己（相似度=100）
+        idx_sorted = [j for j in idx_sorted if j != i]
+        
+        # 取 top-k 相似词
+        top_indices = idx_sorted[:topk]
+        top_pairs = [(word_list[j], dist_mat[i, j]) for j in top_indices]
+        
+        similar_words[word_list[i]] = top_pairs
+
+    # 输出结果
+    for w, sims in similar_words.items():
+        result = [(sw, round(sim, 2)) for sw, sim in sims if sim > 0.6]
+        print(w, result)
+
+def format_single_file(file_path):
     res = []
     with open(file_path, 'r') as file:
         content = file.read()
@@ -203,6 +241,7 @@ def format_file(file_path):
     text_all   = []
     words_info_all = {}
     sentence_info = {}
+    word_sentence = {}
     for item in res_dict_total:
         key = ""
         text = item.get("text", "")
@@ -233,67 +272,32 @@ def format_file(file_path):
                     words_all.append(word)
                     words_info[word] = (yinbiao, mean)
                     words_info_all[word] = (yinbiao, mean)
+                    word_sentence.setdefault(word, []).append(text)
             sentence_info[key]["word"] = words_info
-    return text_all, words_all, words_info_all, sentence_info
-
-def words_cluster(words_all):
-    print("聚类开始")
-    word_count = Counter(words_all)
-    word_sort = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
-    print(len(words_all), len(word_sort))
-    word_list = [it[0] for it in word_sort]
-    n = len(word_list)
-    dist_mat = np.zeros((n, n))
-
-    for i in range(n):
-        for j in range(n):
-            #dist_mat[i, j] = Levenshtein.normalized_similarity(word_list[i], word_list[j])
-            dist_mat[i, j] = DamerauLevenshtein.normalized_similarity(word_list[i], word_list[j])
-    print("聚类结束")
-
-    # 对每个词找出最相似的 top-k
-    topk = 5
-    similar_words = {}
-
-    for i in range(n):
-        # 对第 i 行的相似度排序（从高到低）
-        # argsort 默认升序，所以要加负号
-        idx_sorted = np.argsort(-dist_mat[i])
-        
-        # 跳过自己（相似度=100）
-        idx_sorted = [j for j in idx_sorted if j != i]
-        
-        # 取 top-k 相似词
-        top_indices = idx_sorted[:topk]
-        top_pairs = [(word_list[j], dist_mat[i, j]) for j in top_indices]
-        
-        similar_words[word_list[i]] = top_pairs
-
-    # 输出结果
-    for w, sims in similar_words.items():
-        print(f"\n【{w}】的相似词：")
-        for sw, sim in sims:
-            print(f"   {sw:<10}  相似度={sim:.2f}")
+    return text_all, words_all, words_info_all, sentence_info, word_sentence
 
 def format_files(file_path):
     all_words = []
     all_text  = []
     all_words_info = {}
     all_sentence_info = {}
+    all_word_sentence = {}
     #遍历文件夹下的所有文件，按照序号大小排序，然后依次处理
     files = [f for f in os.listdir(file_path) if f.endswith(".txt")]
     files.sort(key=lambda x: int(x.split(".")[0]))
     for file in files:
         if file.endswith(".txt"):
-            text_in_file, words_in_file, words_info, sentence_info = format_file(os.path.join(file_path, file))
+            text_in_file, words_in_file, words_info, sentence_info, word_sentence = format_single_file(os.path.join(file_path, file))
             # print(text_in_file)
             # print(words_in_file)
             all_words.extend(words_in_file)
             all_text.extend(text_in_file)
             all_words_info.update(words_info)
             all_sentence_info.update(sentence_info)
+            for word, sentences in word_sentence.items():
+                all_word_sentence.setdefault(word, []).extend(sentences)
     #处理句子，得到整片文章的序列
-    if True:
+    if False:
         print(len(all_text))
         #print(all_text[:10])
         #for item in all_text[:10]:
@@ -303,7 +307,6 @@ def format_files(file_path):
             sentence_info = all_sentence_info[key]
             print(sentence_info)
     #处理单词  
-    #if True:
     if False:
         #统计每个单词出现的次数，并按照出现次数降序排序，并打印前100个单词
         word_count = Counter(all_words)
@@ -311,6 +314,10 @@ def format_files(file_path):
         print(len(all_words), len(word_sort))
         #print(all_text[:100])
         words_cluster(all_words)
+
+    if True:
+        for word, sentences in all_word_sentence.items():
+            print(word, sentences)
 
 if __name__ == "__main__":
     arg = sys.argv[1]
