@@ -13,11 +13,11 @@ function gen_pdf() {
     python image_split.py --batch cropped split_results
 
     # 识别图片，将左右两部分图片识别为文字，并合并为pdf
-    python images_to_pdf.py
+    # python images_to_pdf.py
 
-    mv output/output.pdf ~/Downloads
+    # mv output/output.pdf ~/Downloads
 
-    open ~/Downloads
+    # open ~/Downloads
 }
 
 function auto_read(){
@@ -26,13 +26,19 @@ function auto_read(){
 }
 
 function ocr(){
-    python process_ocr_text.py
+    python ocr_tesseract.py
 }
 
 arg=$1
 case $arg in
-    "gen_pdf")
+    "gen")
         gen_pdf
+        ;;
+    "ocr")
+        ocr
+        ;;
+    "auto")
+        auto_read
         ;;
     *)
         echo "Usage: $0 {gen_pdf}"

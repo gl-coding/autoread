@@ -1,8 +1,16 @@
 import os,time,multiprocessing
 from llm_prompt import *
 
+prompt_dict = {
+    "100words/": "correct_words_book",
+    "zhuan8/": "correct_words_book",
+    "prideAndPrejudice/": "correct_article"
+}
+
 #pre_dir = "prideAndPrejudice/"
-pre_dir = "100words/"
+#pre_dir = "100words/"
+pre_dir = "zhuan8/"
+prompt_name = prompt_dict[pre_dir]
 
 def is_all_chinese(l):
     for char in l:
@@ -27,7 +35,7 @@ def write_file(filename):
     correct_dir = pre_dir + 'correct_results'
     with open(os.path.join(correct_dir, filename), 'w', encoding='utf-8') as f:
         f.write(res)
-    print(f"处理完成: {filename}")
+    print(f"处理完成------: {filename}")
 
 def single_process(text):
     st = time.time()
@@ -38,7 +46,7 @@ def single_process(text):
         text = text
     
     prompt_obj = Prompt()
-    res = getattr(prompt_obj, "correct_article")(text)
+    res = getattr(prompt_obj, prompt_name)(text)
     #res = prompt_obj.correct_article(text)
     print(res)
     print(f"耗时: {time.time() - st}秒")
