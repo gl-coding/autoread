@@ -99,8 +99,10 @@ class ProcessClass:
         self.pre_dir = pre_dir
         self.res_fromfile  = []
         self.res_final = []
+        self.res_all = []
 
     def process_text(self):
+        res = []
         merged_dir = self.pre_dir + 'merged_results'
         #读取文件中的内容到res中，做基础处理，删除空行，删除重复行
         with open(os.path.join(merged_dir, 'merged_ocr_results.txt'), 'r', encoding='utf-8') as f:
@@ -111,16 +113,18 @@ class ProcessClass:
                     continue
                 if pre_line == l:
                     continue
-                self.res_fromfile.append(l)
+                res.append(l)
                 pre_line = l
+            self.res_all.append(res)
 
     def write_to_file(self):
+        res = self.res_all[-1]
         #最后一轮结果写入文件
         idx = 0
         merged_dir = self.pre_dir + 'merged_results'
         with open(os.path.join(merged_dir, 'merged_ocr_results_core_words.txt'), 'w', encoding='utf-8') as fw:
-            for r in self.res_final:
+            for r in res:
                 idx += 1
-                print(f"{idx}: {r}")
+                #print(f"{idx}: {r}")
                 fw.write(r)
                 fw.write('\n')
