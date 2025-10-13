@@ -24,31 +24,50 @@ class ProcessZhuan8(ProcessClass):
         #for item in res_out[:10]: print(item)
         self.res_all.append(res_out)
     
+    #合并当前行数据到上一行
     def process_phrase(self):
         res_in = self.res_all[-1]
         pre_line = ""
         res_out = []
         for r in res_in:
+            if r and r[0].isupper():
+                r_list = list(r)
+                r_list[0] = r_list[0].lower()
+                r = "".join(r_list)
+            #取第一个单词，进行后续的逻辑判断
+            first_word = r.split(" ")[0].strip()
+            #if first_word.endswith(".") and not first_word.endswith("..") and not_chinese(first_word): print(r)
             if len(r) > 2 and r[1] == ' ' and (is_all_chinese(r[0]) or r[0] == '□'): 
                 r = r[1:].strip()
-            if "词根记忆" in r:
-                idx = r.find("词根记忆")
-                r = r[idx:]
-                res_out[-1] = res_out[-1] + "; " + r
-            elif "联想记忆" in r:
-                idx = r.find("联想记忆")
-                r = r[idx:]
-                res_out[-1] = res_out[-1] + "; " + r
-            elif r.startswith("/"): #//音标上移
+            if r.startswith("[") and "]" in r and len(res_out) > 0:
                 res_out[-1] = res_out[-1] + " " + r
-            else:
-                res_out.append(r)
+                continue
+            flag = False
+            for key in ["词根记忆", "联想记忆", "词源记忆", "组合词:", "例", "相关词", "记忆", "来自", "构词", "例", \
+                "短语", "词根", "派生", "相关词", "记忆", "衍生词", "习语", "短语", "派生", "本身为词根"]:
+                for sep in ["", ":", "："]:
+                    new_key = key + sep
+                    if r.startswith(new_key):
+                        flag = True
+                        idx = r.find(new_key)
+                        r = r[idx:]
+                        res_out[-1] = res_out[-1] + "; " + r
+                        break
+                if flag: break
+            if flag: continue
+            if r.startswith("/"): #//音标上移
+                res_out[-1] = res_out[-1] + " " + r
+                continue
+            if first_word.endswith(".") and not first_word.endswith("..") and not_chinese(first_word):
+                res_out[-1] = res_out[-1] + " " + r
+                continue
+            res_out.append(r)
             pre_line = r
         self.res_all.append(res_out)
 
     def process(self):
         self.process_text()
-        self.process_yinbiao()
+        #self.process_yinbiao()
         self.process_phrase()
         self.write_to_file()
 
