@@ -10,7 +10,6 @@ prompt_dict = {
 #pre_dir = "prideAndPrejudice/"
 #pre_dir = "100words/"
 pre_dir = "zhuan8/"
-prompt_name = prompt_dict[pre_dir]
 
 def is_all_chinese(l):
     for char in l:
@@ -46,7 +45,7 @@ def single_process(text):
         text = text
     
     prompt_obj = Prompt()
-    res = getattr(prompt_obj, prompt_name)(text)
+    res = getattr(prompt_obj, prompt_dict.get(pre_dir, "none"))(text)
     #res = prompt_obj.correct_article(text)
     print(res)
     print(f"耗时: {time.time() - st}秒")

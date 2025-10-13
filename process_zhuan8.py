@@ -2,6 +2,9 @@ import os,sys,time,multiprocessing
 from llm_prompt import *
 from llm_utils import *
 
+pre_dir = os.path.basename(sys.argv[0]).split(".")[0].split("_")[1] + "/"
+print("pre_dir:", pre_dir)
+
 class ProcessZhuan8(ProcessClass):
     def __init__(self, pre_dir):
         super().__init__(pre_dir)

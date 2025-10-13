@@ -2,6 +2,10 @@ import os,sys,time,multiprocessing
 from llm_prompt import *
 from llm_utils import *
 
+#pre_dir = "100words/"
+pre_dir = os.path.basename(sys.argv[0]).split(".")[0].split("_")[1] + "/"
+print("pre_dir:", pre_dir)
+
 def process_text():
     res = []
     merged_dir = pre_dir + 'merged_results'
@@ -54,17 +58,17 @@ def process_text():
         if "/" in r: 
             word = r.split("/")[0]
             word_pre = word
-        else:
+        else: #除了包含音标的其他情况
             # 判断r中是否全部都是中文
             if is_all_chinese(r):
                 continue
                 print(r)
             if not_chinese(r):
-                continue
+                #continue
                 print(r)
             else:
-                #print(r)
-                continue
+                print(r)
+                #continue
                 pass
         res_new_new.append(r)
 
