@@ -30,6 +30,7 @@ class ProcessZhuan8(ProcessClass):
         pre_line = ""
         res_out = []
         for r in res_in:
+            if r and len(r) == 1: continue
             if r and r[0].isupper():
                 r_list = list(r)
                 r_list[0] = r_list[0].lower()
@@ -43,17 +44,24 @@ class ProcessZhuan8(ProcessClass):
                 res_out[-1] = res_out[-1] + " " + r
                 continue
             flag = False
-            for key in ["词根记忆", "联想记忆", "词源记忆", "组合词:", "例", "相关词", "记忆", "来自", "构词", "例", \
-                "短语", "词根", "派生", "相关词", "记忆", "衍生词", "习语", "短语", "派生", "本身为词根"]:
-                for sep in ["", ":", "："]:
+            for key in ["词根记忆", "联想记忆", "词源记忆", "组合词", "例", "相关词", "记忆", "来自", "构词", "例", "同", \
+                "短语", "词根", "派生", "相关词", "记忆", "衍生词", "习语", "短语", "派生", "本身为词根", "图", "后缀", "派"]:
+                for sep in [":", "："]:
                     new_key = key + sep
-                    if r.startswith(new_key):
+                    if r.startswith(new_key) or new_key in r:
                         flag = True
                         idx = r.find(new_key)
                         r = r[idx:]
                         res_out[-1] = res_out[-1] + "; " + r
                         break
                 if flag: break
+            if flag: continue
+            flag = False
+            for key in ["来自", "一起记", "搭配", "派生"]:
+                if r.startswith(key) or r.endswith(key):
+                    flag = True
+                    res_out[-1] = res_out[-1] + "; " + r
+                    break
             if flag: continue
             if r.startswith("/"): #//音标上移
                 res_out[-1] = res_out[-1] + " " + r
