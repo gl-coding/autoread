@@ -1,15 +1,11 @@
-import os,time,multiprocessing
+import os,time,multiprocessing,json
 from llm_prompt import *
 
-prompt_dict = {
-    "100words/": "correct_words_book",
-    "zhuan8/": "correct_words_book",
-    "prideAndPrejudice/": "correct_article"
-}
+with open('llm_utils.json', 'r', encoding='utf-8') as f:
+    llm_utils = json.load(f)
 
-#pre_dir = "prideAndPrejudice/"
-#pre_dir = "100words/"
-pre_dir = "zhuan8/"
+prompt_dict = llm_utils.get("method", {})
+pre_dir = llm_utils.get("pre_dir", "")
 
 def is_all_chinese(l):
     for char in l:

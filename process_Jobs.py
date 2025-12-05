@@ -12,7 +12,7 @@ MAX_LENGTH = 1000
 #PROMPT = "每一个句话都给出翻译，标注在原文后面括号中，给出这个段落中所有出现的固定搭配和解释，标注“固定搭配”，给出所有单词的音标和释义，标注“单词”"
 PROMPT = ""
 
-dir_name = "Jobs/"
+dir_name = "article_test/"
 res_dir = dir_name + "res"
 file_name = dir_name + "book.txt"
 file_name_res = dir_name + "book_res.txt"
@@ -321,7 +321,7 @@ def format_files(file_path):
             for word, sentences in word_sentence.items():
                 all_word_sentence.setdefault(word, []).extend(sentences)
     #处理句子，得到整片文章的序列
-    if False:
+    if True:
         print(len(all_text))
         #print(all_text[:10])
         #for item in all_text[:10]:
@@ -334,13 +334,13 @@ def format_files(file_path):
             sentence_info = all_sentence_info[key]
             print(sentence_info)
     #处理单词聚类
-    if True:
+    if False:
         #统计每个单词出现的次数，并按照出现次数降序排序，并打印前100个单词
         word_count = Counter(all_words)
         word_sort = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
         print(len(all_words), len(word_sort))
         #print(all_text[:100])
-        words_cluster(all_words)
+        #words_cluster(all_words)
     #处理单词倒排索引
     if False:
         for word, sentences in all_word_sentence.items():

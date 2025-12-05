@@ -1,9 +1,11 @@
-import os,sys,time,multiprocessing
+import os,sys,time,multiprocessing,json
 from llm_prompt import *
 from llm_utils import *
 
-#pre_dir = "100words/"
-pre_dir = os.path.basename(sys.argv[0]).split(".")[0].split("_")[1] + "/"
+with open('llm_utils.json', 'r', encoding='utf-8') as f:
+    llm_utils = json.load(f)
+
+pre_dir = llm_utils.get("pre_dir", "")
 print("pre_dir:", pre_dir)
 
 def process_text():

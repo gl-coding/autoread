@@ -1,0 +1,14 @@
+{
+    "method":{
+        "100words/": "correct_words_book",
+        "words_4ji/": "correct_words_book",
+        "words_6ji/": "correct_words_book",
+        "words_xiaoxue/": "correct_words_book",
+        "words_zhongkao/": "correct_words_book",
+        "words_gaokao/": "correct_words_book",
+        "words_tuofu/": "correct_words_book",
+        "words_zhuan8/": "correct_words_book",
+        "prideAndPrejudice/": "correct_article"
+    },
+    "pre_dir": "words_4ji/"
+}

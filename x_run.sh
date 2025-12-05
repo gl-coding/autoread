@@ -28,7 +28,21 @@ function gen_pdf() {
 }
 
 function ocr(){
-    python ocr_tesseract.py
+    suffix=$1
+    python ocr_tesseract.py split_results_$suffix ocr_results_$suffix
+}
+
+function process_word() {
+    #bash x_run.sh word words_6ji/
+    arg=$1
+    jq '.pre_dir = "data/'$arg'"' llm_utils.json > tmp.json && mv tmp.json llm_utils.json
+    #python process_100words.py multi
+    python process_100words.py single
+}
+
+function process_article() {
+    suffix=$1
+    python process_Jobs.py ocr_results_$suffix
 }
 
 arg=$1
@@ -43,7 +57,13 @@ case $arg in
         gen_pdf $2
         ;;
     "ocr")
-        ocr
+        ocr $2
+        ;;
+    "word")
+        process_word $2
+        ;;
+    "article")
+        process_article $2
         ;;
     *)
         echo "Usage: $0 {gen_pdf}"
