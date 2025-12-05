@@ -7,29 +7,29 @@ function auto_read(){
 function crop() {
     suffix=$1
     #先清空目录，裁剪目录
-    rm -rf cropped_$suffix
+    rm -rf data/$suffix/cropped
     #再清空分割目录
-    rm -rf split_results_$suffix
+    rm -rf data/$suffix/split_results
     #再清空ocr目录
-    #rm -rf ocr_results
+    rm -rf data/$suffix/ocr_results
 
     # 裁剪图片，去掉电脑背景的边框，保留书本的内容
-    python batch_crop.py screenshots_$suffix cropped_$suffix
+    python batch_crop.py data/$suffix/screenshots data/$suffix/cropped
 
     # 分割图片，将书本分割为左右两部分
-    python image_split.py --batch cropped_$suffix split_results_$suffix
+    python image_split.py --batch data/$suffix/cropped data/$suffix/split_results
 }
 
 function gen_pdf() {
     suffix=$1
     crop $suffix
     # 识别图片，将左右两部分图片识别为文字，并合并为pdf
-    python images_to_pdf.py split_results_$suffix
+    python images_to_pdf.py data/$suffix/split_results
 }
 
 function ocr(){
     suffix=$1
-    python ocr_tesseract.py split_results_$suffix ocr_results_$suffix
+    python ocr_tesseract.py data/$suffix/split_results data/$suffix/ocr_results
 }
 
 function process_word() {
