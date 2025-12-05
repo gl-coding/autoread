@@ -35,9 +35,16 @@ function ocr(){
 function process_word() {
     #bash x_run.sh word words_6ji/
     arg=$1
+    t=$2
     jq '.pre_dir = "data/'$arg'"' llm_utils.json > tmp.json && mv tmp.json llm_utils.json
-    #python process_100words.py multi
-    python process_100words.py single
+    if [ "$t" == "multi" ]; then
+        python process_100words.py multi
+    elif [ "$t" == "single" ]; then
+        python process_100words.py single
+    elif [ "$t" == "merge" ]; then
+        python process_100words.py merge
+        python process_100words.py process
+    fi
 }
 
 function process_article() {
@@ -60,7 +67,7 @@ case $arg in
         ocr $2
         ;;
     "word")
-        process_word $2
+        process_word $2 $3
         ;;
     "article")
         process_article $2
