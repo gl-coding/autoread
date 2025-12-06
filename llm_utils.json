@@ -7,8 +7,9 @@
     "data/words_zhongkao/": "correct_words_book",
     "data/words_gaokao/": "correct_words_book",
     "data/words_tuofu/": "correct_words_book",
+    "data/words_zhuan4/": "correct_words_book",
     "data/words_zhuan8/": "correct_words_book",
     "data/prideAndPrejudice/": "correct_article"
   },
-  "pre_dir": "data/words_zhongkao/"
+  "pre_dir": "data/words_zhuan4/"
 }

@@ -3,6 +3,7 @@ import json
 import pyautogui
 import time
 import os
+import argparse
 from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                            QHBoxLayout, QPushButton, QLabel, QLineEdit)
@@ -11,15 +12,20 @@ from PyQt5.QtGui import QFont, QIntValidator
 from PyQt5.QtWidgets import QMessageBox
 
 class MouseTracker(QMainWindow):
-    def __init__(self):
+    def __init__(self, output_dir=None):
         super().__init__()
         self.performing_action = False
+        self.output_dir = output_dir
         self.setup_screenshots_dir()
         self.initUI()
         
     def setup_screenshots_dir(self):
         # 创建screenshots目录
-        self.screenshots_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'screenshots')
+        if self.output_dir:
+            self.screenshots_dir = os.path.abspath(self.output_dir)
+        else:
+            self.screenshots_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'screenshots')
+        
         if not os.path.exists(self.screenshots_dir):
             os.makedirs(self.screenshots_dir)
         
@@ -253,8 +259,14 @@ class MouseTracker(QMainWindow):
             self.performing_action = False  # 确保标记被重置
 
 def main():
-    app = QApplication(sys.argv)
-    tracker = MouseTracker()
+    # 解析命令行参数
+    parser = argparse.ArgumentParser(description='鼠标坐标跟踪器 - 自动点击和截图工具')
+    parser.add_argument('-o', '--output', type=str, help='指定截图输出目录')
+    args, unknown = parser.parse_known_args()
+    
+    # 创建应用时需要传入正确的参数
+    app = QApplication([sys.argv[0]] + unknown)
+    tracker = MouseTracker(output_dir=args.output)
     sys.exit(app.exec_())
 
 if __name__ == '__main__':

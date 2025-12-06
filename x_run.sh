@@ -1,7 +1,7 @@
-
 function auto_read(){
+    suffix=$1
     #先开启微信阅读，打开相应的书，然后运行这个脚本，截图保存在screenshots目录
-    python mouse_tracker.py
+    python mouse_tracker.py -o data/$suffix/screenshots
 }
 
 function crop() {
@@ -55,7 +55,7 @@ function process_article() {
 arg=$1
 case $arg in
     "auto")
-        auto_read
+        auto_read $2
         ;;
     "crop")
         crop $2
